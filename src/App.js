@@ -1,25 +1,47 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from 'react';
+import openai from './openai';
 
-function App() {
+const App = () => {
+  const [chatMessages, updateChat] = useState([
+    {
+      role: "system",
+      content: "Today is June 30th, 2024",
+    },
+  ]);
+  const [userMessage, updateUserMessage] = useState("");
+  const [chatResponse, updateResponse] = useState("");
+
+  useEffect(() => {
+    console.log(chatMessages);
+  }, [chatMessages])
+
+  const processQuestion = async () => {
+    const newMessage = {
+      role: "user",
+      content: userMessage,
+    };
+
+    const updatedChatMessages = [...chatMessages, newMessage];
+    updateChat(updatedChatMessages);
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: updatedChatMessages,
+    });
+    updateResponse(response.choices[0].message.content);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <input
+        value={userMessage}
+        onChange={(e) => {
+          updateUserMessage(e.target.value);
+        }}
+      />
+      <button onClick={() => {processQuestion()}}>Ask</button>
+      <div>{chatResponse}</div>
     </div>
   );
-}
+};
 
 export default App;

@@ -1,0 +1,35 @@
+.calendar-container {
+    display: grid;
+    grid-template-rows: auto repeat(5, 1fr);
+    grid-template-columns: repeat(7, 1fr);
+    background-color: lightblue;
+}
+.calendar-day {
+    border: solid 1px black;
+    height: 12vh;
+}
+.calendar-day-name {
+    border: solid 1px black;
+    height: 5vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+}
+.calendar-header {
+    margin-top: 5px;
+}
+.calendar {
+    margin-top: 50px;
+    margin-right: 5px;
+    border: solid 1px black;
+}
+#calendar-button {
+    border: solid 1px black;
+    width: 75px;
+    height: auto;
+    border-radius: 15%;
+}
+#calendar-button:hover {
+    cursor: pointer;
+}
