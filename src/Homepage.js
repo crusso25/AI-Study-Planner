@@ -3,12 +3,15 @@ import { AccountContext } from "./Account";
 import "./Homepage.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Modal from "./popUps/modal.js";
+import ClassModal from "./popUps/ClassModal.js"
 
 const Homepage = () => {
   const { getSession } = useContext(AccountContext);
   const [sessionData, setSessionData] = useState(null);
   const [classList, updateClasses] = useState([]);
-  const [isModalOpen, showModal] = useState(false);
+  const [isAddClassModalOpen, setAddClassModalOpen] = useState(false);
+  const [isClassModalOpen, setClassModalOpen] = useState(false);
+  const [selectedClass, setSelectedClass] = useState(null);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -59,7 +62,7 @@ const Homepage = () => {
   const addClass = async (newClass) => {
     if (sessionData) {
       const idToken = sessionData.getIdToken().getJwtToken();
-      const userId = sessionData.getIdToken().payload.sub; // Assuming the user ID is in the token payload
+      const userId = sessionData.getIdToken().payload.sub;
       try {
         const response = await fetch(
           "https://yloqq6vtu4.execute-api.us-east-2.amazonaws.com/test/Transactions/",
@@ -98,27 +101,45 @@ const Homepage = () => {
         <h1>Your Classes:</h1>
         <br />
         <div className="row g-3">
-          <div onClick={() => showModal(true)} id="add-class" className="ms-3">
+          <div onClick={() => setAddClassModalOpen(true)} id="add-class" className="ms-3">
             Add Class
           </div>
           {classList.map((classItem) => (
-            <div className="col-sm-3 class-item ms-3" key={classItem}>
+            <div
+              className="col-sm-3 class-item ms-3"
+              key={classItem}
+              onClick={() => {
+                setSelectedClass(classItem);
+                setClassModalOpen(true);
+              }}
+            >
               {classItem}
             </div>
           ))}
         </div>
       </div>
-      {isModalOpen && (
+      {isAddClassModalOpen && (
         <Modal
           addClassToList={(className) => {
             addClass(className);
-            showModal(false);
+            setAddClassModalOpen(false);
           }}
-          closeModal={() => showModal(false)}
+          closeModal={() => setAddClassModalOpen(false)}
+        />
+      )}
+      {isClassModalOpen && selectedClass && (
+        <ClassModal
+          className={selectedClass}
+          closeModal={() => setClassModalOpen(false)}
+          deleteClass={() => {
+            // handle delete class logic here
+            setClassModalOpen(false);
+          }}
         />
       )}
     </div>
   );
 };
+
 
 export default Homepage;

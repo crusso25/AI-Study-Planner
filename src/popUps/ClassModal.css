@@ -1,0 +1,21 @@
+.modal-tabs {
+    display: flex;
+    justify-content: space-around;
+    border-bottom: 1px solid #ccc;
+}
+
+.modal-tabs button {
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    color: #007bff;
+    transition: color 0.3s ease;
+}
+
+.modal-tabs button.active {
+    color: #0056b3;
+    border-bottom: 2px solid #0056b3;
+}
+

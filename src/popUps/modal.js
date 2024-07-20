@@ -167,6 +167,7 @@ const Modal = ({ addClassToList, closeModal }) => {
               startDate: calendarEvent.startDate,
               endDate: calendarEvent.endDate,
               content: calendarEvent.content,
+              className: calendarEvent.className,
             }),
           }
         );
@@ -195,11 +196,6 @@ const Modal = ({ addClassToList, closeModal }) => {
       return questions;
     }
     return [];
-  };
-
-  const onSubmit = (event) => {
-    event.preventDefault();
-    //addClassToList(className);
   };
 
   const onFilesAdded = useCallback((files) => {
@@ -306,12 +302,15 @@ const Modal = ({ addClassToList, closeModal }) => {
           startDate: new Date(`${session.date}T${session.startTime}:00`),
           endDate: new Date(`${session.date}T${session.endTime}:00`),
           content: session.content,
+          className: className,
         });
       });
     });
     closeModal();
     setQuestions([]);
     setQuestionAnswers([]);
+    addClassToList(className);
+    setClassName("");
     return events;
   };
 
