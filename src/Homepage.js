@@ -94,28 +94,29 @@ const Homepage = () => {
 
   return (
     <div>
-      {isModalOpen && (
-              <Modal
-                addClassToList={(className) => {
-                  addClass(className);
-                }}
-              />
-            )}
       <div className="container-fluid classes-container">
         <h1>Your Classes:</h1>
-        <br></br>
+        <br />
         <div className="row g-3">
-          <div onClick={() => {showModal(!isModalOpen)}} id="add-class" className="ms-3">
-            
+          <div onClick={() => showModal(true)} id="add-class" className="ms-3">
+            Add Class
           </div>
-          {classList.map((classItem) => {
-            return <div className="col-sm-3 class-item ms-3">{classItem}</div>;
-          })}
+          {classList.map((classItem) => (
+            <div className="col-sm-3 class-item ms-3" key={classItem}>
+              {classItem}
+            </div>
+          ))}
         </div>
       </div>
-      {/* <div className="container-fluid upcoming-tasks">
-                <h1>To do this week:</h1>
-            </div> */}
+      {isModalOpen && (
+        <Modal
+          addClassToList={(className) => {
+            addClass(className);
+            showModal(false);
+          }}
+          closeModal={() => showModal(false)}
+        />
+      )}
     </div>
   );
 };

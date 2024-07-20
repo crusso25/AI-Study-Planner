@@ -1,7 +1,5 @@
 Things to do with study planner app:
 
---Fix add class button
-
 --Find layout for class homepage
 
 --Finalize header layout
@@ -15,3 +13,7 @@ Things to do with study planner app:
 --Make the calendar events clickable to a pop up of that study session's material (Practice problems, content to review, recourses, ...)
 
 --Make a better login / signup page
+
+FINISHED :
+--Fix add class button
+

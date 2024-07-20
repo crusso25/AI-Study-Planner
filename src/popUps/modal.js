@@ -88,7 +88,7 @@ const scheduleStringResponse = `[
 const response =
   "True {What is the subject or topics of this class?} {What are the specific learning objectives or outcomes for each week?} {What are the homework or assignments with their specific requirements and due dates?} {When are the exact dates for the exams?} {What are the specifics of the project or projects for this class?}";
 
-const Modal = ({ addClassToList }) => {
+const Modal = ({ addClassToList, closeModal }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [className, setClassName] = useState("");
   const [duration, setDuration] = useState("");
@@ -202,10 +202,6 @@ const Modal = ({ addClassToList }) => {
     //addClassToList(className);
   };
 
-  const toggleModal = () => {
-    setIsModalOpen(!isModalOpen);
-  };
-
   const onFilesAdded = useCallback((files) => {
     setUploadedFiles(files);
     const readers = files.map(async (file) => {
@@ -313,93 +309,91 @@ const Modal = ({ addClassToList }) => {
         });
       });
     });
-    setIsModalOpen(!isModalOpen);
+    closeModal();
     setQuestions([]);
     setQuestionAnswers([]);
     return events;
   };
 
   return (
-    <div className="container">
-        <div>
-          <div className="modal-overlay" onClick={toggleModal}></div>
-          <div className="modal-container">
-            <form className="form">
-              <div className="modal-header">
-                <h2>Enter Class Details</h2>
-                <div className="close-icon toggleButton" onClick={toggleModal}>
-                  &times;
-                </div>
-              </div>
-              <div className="modal-content">
-                {questions.length !== 0 ? (
-                  <>
-                    <h2>Please answer additional questions</h2>
-                    {questions.map((question, index) => (
-                      <div className="row" key={index}>
-                        <div className="input-group">
-                          <input
-                            type="text"
-                            name={question}
-                            className="input"
-                            onChange={(e) => {
-                              updateAnswersArray(e.target.value, index);
-                            }}
-                            required
-                          />
-                          <label className="label">{question}</label>
-                        </div>
-                      </div>
-                    ))}
-                    <button
-                      className="button"
-                      onClick={submitAdditionalQuestions}
-                    >
-                      Submit
-                    </button>
-                  </>
-                ) : (
-                  <>
+    <div className="modal open">
+      <div className="modal-overlay" onClick={closeModal}></div>
+      <div className="modal-container">
+        <form className="form">
+          <div className="modal-header">
+            <h2>Enter Class Details</h2>
+            <div className="close-icon toggleButton" onClick={closeModal}>
+              &times;
+            </div>
+          </div>
+          <div className="modal-content">
+            {questions.length !== 0 ? (
+              <>
+                <h2>Please answer additional questions</h2>
+                {questions.map((question, index) => (
+                  <div className="row" key={index}>
                     <div className="input-group">
                       <input
-                        type="test"
-                        name="ClassName"
+                        type="text"
+                        name={question}
                         className="input"
                         onChange={(e) => {
-                          setClassName(e.target.value);
+                          updateAnswersArray(e.target.value, index);
                         }}
                         required
                       />
-                      <label className="label">Name of Class</label>
+                      <label className="label">{question}</label>
                     </div>
-                    <div id="drag-and-drop">
-                      <DragDrop onFilesAdded={onFilesAdded} />
-                      <br></br>
-                    </div>
-                  </>
-                )}
-              </div>
-              {questions.length === 0 && (
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="button toggleButton"
-                    onClick={toggleModal}
-                  >
-                    Close
-                  </button>
-                  <button
-                    type="submit"
-                    onClick={processQuestion}
-                    className="button"
-                  >
-                    Add
-                  </button>
+                  </div>
+                ))}
+                <button
+                  className="button"
+                  onClick={submitAdditionalQuestions}
+                >
+                  Submit
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="input-group">
+                  <input
+                    type="test"
+                    name="ClassName"
+                    className="input"
+                    onChange={(e) => {
+                      setClassName(e.target.value);
+                    }}
+                    required
+                  />
+                  <label className="label">Name of Class</label>
                 </div>
-              )}
-            </form>
+                <div id="drag-and-drop">
+                  <DragDrop onFilesAdded={onFilesAdded} />
+                  <br></br>
+                </div>
+              </>
+            )}
           </div>
-        </div>
+          {questions.length === 0 && (
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="button toggleButton"
+                onClick={closeModal}
+              >
+                Close
+              </button>
+              <button
+                type="submit"
+                onClick={processQuestion}
+                className="button"
+              >
+                Add
+              </button>
+            </div>
+          )}
+        </form>
+      </div>
     </div>
   );
 };
