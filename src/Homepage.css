@@ -1,25 +1,64 @@
 .classes-container {
-  margin-top: 50px;
-  /* border: solid 1px black; */
-  height: 100%;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
+
+h1 {
+  color: #333;
+  font-family: 'Arial', sans-serif;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
 .class-item {
-  width: auto;
-  border: solid 2px black;
-  aspect-ratio: 1 / 1;
+  width: 150px;
+  height: 150px;
+  border: solid 2px #007bff;
+  border-radius: 10px;
   display: flex;
   justify-content: center;
   align-items: center;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-family: 'Arial', sans-serif;
+  color: #007bff;
+  font-weight: bold;
+  margin: 10px;
+  transition: transform 0.3s ease;
 }
+
+.class-item:hover {
+  transform: translateY(-5px);
+}
+
 #add-class {
-  width: auto;
-  aspect-ratio: 1 / 1;
+  width: 150px;
+  height: 150px;
+  border: 2px dashed #007bff;
+  border-radius: 10px;
   display: flex;
   justify-content: center;
   align-items: center;
+  background-color: #f0f8ff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin: 10px;
+  transition: transform 0.3s ease, background-color 0.3s ease;
 }
+
+#add-class:hover {
+  background-color: #e7f0fa;
+}
+
 .upcoming-tasks {
   margin: 50px;
-  /* border: solid 1px black; */
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   height: 500px;
+}
+.row {
+  height: 100vh;
 }

@@ -203,7 +203,6 @@ const Modal = ({ addClassToList }) => {
   };
 
   const toggleModal = () => {
-    console.log(isModalOpen);
     setIsModalOpen(!isModalOpen);
   };
 
@@ -322,11 +321,6 @@ const Modal = ({ addClassToList }) => {
 
   return (
     <div className="container">
-      <button className="button toggleButton" onClick={toggleModal}>
-        + Add Class
-      </button>
-
-      {isModalOpen && (
         <div>
           <div className="modal-overlay" onClick={toggleModal}></div>
           <div className="modal-container">
@@ -406,7 +400,6 @@ const Modal = ({ addClassToList }) => {
             </form>
           </div>
         </div>
-      )}
     </div>
   );
 };

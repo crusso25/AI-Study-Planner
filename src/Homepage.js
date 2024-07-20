@@ -8,6 +8,7 @@ const Homepage = () => {
   const { getSession } = useContext(AccountContext);
   const [sessionData, setSessionData] = useState(null);
   const [classList, updateClasses] = useState([]);
+  const [isModalOpen, showModal] = useState(false);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -93,16 +94,19 @@ const Homepage = () => {
 
   return (
     <div>
+      {isModalOpen && (
+              <Modal
+                addClassToList={(className) => {
+                  addClass(className);
+                }}
+              />
+            )}
       <div className="container-fluid classes-container">
         <h1>Your Classes:</h1>
         <br></br>
         <div className="row g-3">
-          <div id="add-class" className="ms-3">
-            <Modal
-              addClassToList={(className) => {
-                addClass(className);
-              }}
-            />
+          <div onClick={() => {showModal(!isModalOpen)}} id="add-class" className="ms-3">
+            
           </div>
           {classList.map((classItem) => {
             return <div className="col-sm-3 class-item ms-3">{classItem}</div>;
