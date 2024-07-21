@@ -9,11 +9,12 @@ Things to do with study planner app:
 --Be able to click on classes to edit information / add more information to update calendar
 
 --Make practice problems / questions that pertains to the material for a certain study session
-
---Make the calendar events clickable to a pop up of that study session's material (Practice problems, content to review, recourses, ...)
+	-Add to clickable calendar events
 
 --Make a better login / signup page
 
 FINISHED :
 --Fix add class button
+
+--Make the calendar events clickable to a pop up of that study session's material (Practice problems, content to review, recourses, ...)
 

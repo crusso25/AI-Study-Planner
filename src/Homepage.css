@@ -49,6 +49,7 @@ h1 {
 }
 
 #add-class:hover {
+  cursor: pointer;
   background-color: #e7f0fa;
 }
 

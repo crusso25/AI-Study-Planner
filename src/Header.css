@@ -38,6 +38,7 @@ header {
     flex-direction: column;
     justify-content: end;
     align-items: center;
+    z-index: 1000;
 }
 #login-button {
     padding: 0px;

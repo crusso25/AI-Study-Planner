@@ -6,87 +6,6 @@ import * as pdfjsLib from "pdfjs-dist";
 import Tesseract from "tesseract.js";
 import { CalendarContext } from "../CalendarContext";
 import { AccountContext } from "../Account";
-// const scheduleStringResponse = `[
-// {
-//       "week": "Week 1",
-//       "sessions": [
-//         {
-//           "title": "Session1",
-//           "date": "2022-01-23",
-//           "startTime": "16:00",
-//           "endTime": "18:00",
-//           "content": "Section 1.1 - The Geometry and Algebra of Vectors"
-//         },
-//         {
-//           "title": "Session2",
-//           "date": "2022-01-25",
-//           "startTime": "16:00",
-//           "endTime": "18:00",
-//           "content": "Section 1.2 - Length and Angle: The Dot Product"
-//         }
-//       ]
-//     },
-//     {
-//       "week": "Week 2",
-//       "sessions": [
-//         {
-//           "title": "Session3",
-//           "date": "2022-01-30",
-//           "startTime": "16:00",
-//           "endTime": "18:00",
-//           "content": "Section 2.1 - Introduction to Linear Systems"
-//         },
-//         {
-//           "title": "Session4",
-//           "date": "2022-02-01",
-//           "startTime": "16:00",
-//           "endTime": "18:00",
-//           "content": "Section 2.2 - Direct Methods for Solving Linear Systems"
-//         }
-//       ]
-//     },
-//     {
-//       "week": "Week 3",
-//       "sessions": [
-//         {
-//           "title": "Session5",
-//           "date": "2022-02-06",
-//           "startTime": "16:00",
-//           "endTime": "18:00",
-//           "content": "Section 2.3 - Spanning Sets Linear Independence"
-//         },
-//         {
-//           "title": "Session6",
-//           "date": "2022-02-08",
-//           "startTime": "16:00",
-//           "endTime": "18:00",
-//           "content": "Review for Section 2.2 - Direct Methods for Solving Linear Systems and prep for quiz"
-//         }
-//       ]
-//     },
-//    {
-//       "week": "Week 4",
-//       "sessions": [
-//         {
-//           "title": "Session7",
-//           "date": "2022-02-13",
-//           "startTime": "16:00",
-//           "endTime": "18:00",
-//           "content": "Section 3.1 - Matrix Operations"
-//         },
-//        {
-//           "title": "Session8",
-//            "date": "2022-02-15",
-//            "startTime": "16:00", 
-//           "endTime": "18:00",
-//           "content": "Section 3.2 - Matrix Algebra"
-//         }
-//       ]
-//     }
-// ]`;
-
-// const response =
-//   "True {What is the subject or topics of this class?} {What are the specific learning objectives or outcomes for each week?} {What are the homework or assignments with their specific requirements and due dates?} {When are the exact dates for the exams?} {What are the specifics of the project or projects for this class?}";
 
 const Modal = ({ addClassToList, closeModal }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -94,11 +13,12 @@ const Modal = ({ addClassToList, closeModal }) => {
   const [duration, setDuration] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [fileContents, setFileContents] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [chatMessages, updateChat] = useState([
     {
       role: "system",
       content:
-        "Create a week-by-week study planner for the first 4 weeks of this class, with varying amounts of study sessions per week depending on the workload (e.g., homework due, exam coming up). Each study session should include the date, duration, and specific content to cover for the next homework, exam, or project. If you need additional information to create a detailed planner with specific content for each study session, respond with the format: True {Question1} {Question2} ... {Last Question}. If you can create a specific week-by-week planner with specific content for each study session, respond in the following exact format (JSON format). Nothing other than these exact formats should be given in the response, it must be exactly as stated in the formats given. Maximum of 2 study sessions per week" +
+        "Create a week-by-week study planner for the first 4 weeks of this class, with varying amounts of study sessions per week depending on the workload (e.g., homework due, exam coming up). Each study session should include the date, duration, and specific content to cover for the next homework, exam, or project. If you need additional information to create a detailed planner with specific content for each study session, respond with the format: True {\"questions\": [\"Question1\", \"Question2\", \"Last Question\"]}. If you can create a specific week-by-week planner with specific content for each study session, respond in the following exact format (JSON format). Nothing other than these exact formats should be given in the response, it must be exactly as stated in the formats given. Maximum of 2 study sessions per week" +
         `[{
           "week": "Week X",
           "sessions": [
@@ -126,7 +46,7 @@ const Modal = ({ addClassToList, closeModal }) => {
   const [userMessage, updateUserMessage] = useState("");
   const [chatResponse, updateResponse] = useState("");
   const [questions, setQuestions] = useState([]);
-  const [questionAnswers, setQuestionAnswers] = useState([]);
+  const [questionAnswers, setQuestionAnswers] = useState({});
   const { setCalendarEvents } = useContext(CalendarContext);
   const { getSession } = useContext(AccountContext);
   const [sessionData, setSessionData] = useState(null);
@@ -187,23 +107,23 @@ const Modal = ({ addClassToList, closeModal }) => {
 
   const parseResponseForQuestions = (response) => {
     if (response.startsWith("True")) {
-      const questions = response.substring(5).split("} {");
-      questions[0] = questions[0].replace("{", ""); // Clean up the first element
-      questions[questions.length - 1] = questions[questions.length - 1].replace(
-        "}",
-        ""
-      ); // Clean up the last element
-      setQuestions(questions);
-      return questions;
-    }
-    else {
-      parseCalendarResponse(response);
+      const jsonResponse = response.substring(5);
+      const parsedQuestions = JSON.parse(jsonResponse);
+      setQuestions(parsedQuestions.questions);
+      return parsedQuestions.questions;
+    } else {
+      const calendarEvents = parseCalendarResponse(response);
+      for (let i = 0; i < calendarEvents.length; i++) {
+        addCalendarEvent(calendarEvents[i]);
+      }
+      setQuestions([]);
     }
     return [];
   };
 
   const onFilesAdded = useCallback((files) => {
     setUploadedFiles(files);
+    setIsLoading(true); // Show loading spinner
     const readers = files.map(async (file) => {
       if (file.type === "application/pdf") {
         return await readPDF(file);
@@ -216,8 +136,12 @@ const Modal = ({ addClassToList, closeModal }) => {
     Promise.all(readers)
       .then((contents) => {
         setFileContents(contents);
+        setIsLoading(false); // Hide loading spinner
       })
-      .catch((error) => console.error("Error reading files:", error));
+      .catch((error) => {
+        console.error("Error reading files:", error);
+        setIsLoading(false); // Hide loading spinner
+      });
   }, []);
 
   const processQuestion = async () => {
@@ -234,10 +158,7 @@ const Modal = ({ addClassToList, closeModal }) => {
     });
     updateResponse(response);
     console.log(response.choices[0].message.content);
-    const extractedQuestions = parseResponseForQuestions(
-      response.choices[0].message.content
-    );
-    
+    parseResponseForQuestions(response.choices[0].message.content);
   };
 
   const readPDF = async (file) => {
@@ -257,24 +178,20 @@ const Modal = ({ addClassToList, closeModal }) => {
     return result.data.text;
   };
 
-  const updateAnswersArray = (newValue, index) => {
-    setQuestionAnswers(() => {
-      const updatedAnswers = [...questionAnswers];
-      updatedAnswers[index] = newValue;
-      console.log(updatedAnswers);
-      return updatedAnswers;
-    });
+  const updateAnswersArray = (newValue, question) => {
+    setQuestionAnswers((prevAnswers) => ({
+      ...prevAnswers,
+      [question]: newValue,
+    }));
   };
 
   const submitAdditionalQuestions = async (event) => {
     event.preventDefault();
-    const answersString = questionAnswers
-      .map((answer, index) => `Question ${index + 1} answer: ${answer}`)
-      .join(" ");
+    const answersString = JSON.stringify(questionAnswers);
     const newMessage = {
       role: "user",
       content:
-        "Here are the answers to the additional questions you asked. If additional questions are needed, or more clarification is needed on a certain question, give me the questions in the same format. If not then make the class schedule in the same format as given perviously" +
+        "Here are the answers to the additional questions you asked. If additional questions are needed, or more clarification is needed on a certain question, give me the questions in the same format. If not then make the class schedule in the same format as given previously" +
         answersString,
     };
 
@@ -288,12 +205,7 @@ const Modal = ({ addClassToList, closeModal }) => {
     console.log(airesponse.choices[0].message.content);
     updateResponse(airesponse.choices[0].message.content);
 
-    const calendarEvents = parseCalendarResponse(airesponse.choices[0].message.content);
-    console.log(calendarEvents);
-    for (let i = 0; i < calendarEvents.length; i++) {
-      addCalendarEvent(calendarEvents[i]);
-    }
-    //setCalendarEvents(calendarEvents);
+    parseResponseForQuestions(airesponse.choices[0].message.content);
   };
 
   const parseCalendarResponse = (response) => {
@@ -323,7 +235,8 @@ const Modal = ({ addClassToList, closeModal }) => {
     <div className="modal open">
       <div className="modal-overlay" onClick={closeModal}></div>
       <div className="modal-container">
-        <div className="form">
+        {isLoading && <div className="loading-overlay"><div className="spinner"></div></div>}
+        <div className={`form ${isLoading ? "blurred" : ""}`}>
           <div className="modal-header">
             <h2>Enter Class Details</h2>
             <div className="close-icon toggleButton" onClick={closeModal}>
@@ -342,7 +255,7 @@ const Modal = ({ addClassToList, closeModal }) => {
                         name={question}
                         className="input"
                         onChange={(e) => {
-                          updateAnswersArray(e.target.value, index);
+                          updateAnswersArray(e.target.value, question);
                         }}
                         required
                       />
@@ -350,10 +263,7 @@ const Modal = ({ addClassToList, closeModal }) => {
                     </div>
                   </div>
                 ))}
-                <button
-                  className="button"
-                  onClick={submitAdditionalQuestions}
-                >
+                <button className="button" onClick={submitAdditionalQuestions}>
                   Submit
                 </button>
               </>
@@ -371,26 +281,18 @@ const Modal = ({ addClassToList, closeModal }) => {
                 </div>
                 <div id="drag-and-drop">
                   <DragDrop onFilesAdded={onFilesAdded} />
-                  <br></br>
+                  <br />
                 </div>
               </>
             )}
           </div>
+          {questions.length === 0 && (
             <div className="modal-footer">
-              <button
-                type="button"
-                className="button toggleButton"
-                onClick={closeModal}
-              >
-                Close
-              </button>
-              <button
-                onClick={processQuestion}
-                className="button"
-              >
+              <button onClick={processQuestion} className="button">
                 Add
               </button>
             </div>
+          )}
         </div>
       </div>
     </div>

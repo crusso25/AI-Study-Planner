@@ -81,11 +81,13 @@ const Account = (props) => {
                         {props.children}
                     </>
                 ) : (
-                    <div id="signup-login-form">
+                    <div id="auth-container">
+                      <div id="auth-forms">
                         <Signup />
                         <Login />
+                      </div>
                     </div>
-                )}
+                  )}
         </AccountContext.Provider>
     );
 };
