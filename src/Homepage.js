@@ -132,7 +132,6 @@ const Homepage = () => {
           className={selectedClass}
           closeModal={() => setClassModalOpen(false)}
           deleteClass={() => {
-            // handle delete class logic here
             setClassModalOpen(false);
           }}
         />

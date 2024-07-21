@@ -6,87 +6,87 @@ import * as pdfjsLib from "pdfjs-dist";
 import Tesseract from "tesseract.js";
 import { CalendarContext } from "../CalendarContext";
 import { AccountContext } from "../Account";
-const scheduleStringResponse = `[
-{
-      "week": "Week 1",
-      "sessions": [
-        {
-          "title": "Session1",
-          "date": "2022-01-23",
-          "startTime": "16:00",
-          "endTime": "18:00",
-          "content": "Section 1.1 - The Geometry and Algebra of Vectors"
-        },
-        {
-          "title": "Session2",
-          "date": "2022-01-25",
-          "startTime": "16:00",
-          "endTime": "18:00",
-          "content": "Section 1.2 - Length and Angle: The Dot Product"
-        }
-      ]
-    },
-    {
-      "week": "Week 2",
-      "sessions": [
-        {
-          "title": "Session3",
-          "date": "2022-01-30",
-          "startTime": "16:00",
-          "endTime": "18:00",
-          "content": "Section 2.1 - Introduction to Linear Systems"
-        },
-        {
-          "title": "Session4",
-          "date": "2022-02-01",
-          "startTime": "16:00",
-          "endTime": "18:00",
-          "content": "Section 2.2 - Direct Methods for Solving Linear Systems"
-        }
-      ]
-    },
-    {
-      "week": "Week 3",
-      "sessions": [
-        {
-          "title": "Session5",
-          "date": "2022-02-06",
-          "startTime": "16:00",
-          "endTime": "18:00",
-          "content": "Section 2.3 - Spanning Sets Linear Independence"
-        },
-        {
-          "title": "Session6",
-          "date": "2022-02-08",
-          "startTime": "16:00",
-          "endTime": "18:00",
-          "content": "Review for Section 2.2 - Direct Methods for Solving Linear Systems and prep for quiz"
-        }
-      ]
-    },
-   {
-      "week": "Week 4",
-      "sessions": [
-        {
-          "title": "Session7",
-          "date": "2022-02-13",
-          "startTime": "16:00",
-          "endTime": "18:00",
-          "content": "Section 3.1 - Matrix Operations"
-        },
-       {
-          "title": "Session8",
-           "date": "2022-02-15",
-           "startTime": "16:00", 
-          "endTime": "18:00",
-          "content": "Section 3.2 - Matrix Algebra"
-        }
-      ]
-    }
-]`;
+// const scheduleStringResponse = `[
+// {
+//       "week": "Week 1",
+//       "sessions": [
+//         {
+//           "title": "Session1",
+//           "date": "2022-01-23",
+//           "startTime": "16:00",
+//           "endTime": "18:00",
+//           "content": "Section 1.1 - The Geometry and Algebra of Vectors"
+//         },
+//         {
+//           "title": "Session2",
+//           "date": "2022-01-25",
+//           "startTime": "16:00",
+//           "endTime": "18:00",
+//           "content": "Section 1.2 - Length and Angle: The Dot Product"
+//         }
+//       ]
+//     },
+//     {
+//       "week": "Week 2",
+//       "sessions": [
+//         {
+//           "title": "Session3",
+//           "date": "2022-01-30",
+//           "startTime": "16:00",
+//           "endTime": "18:00",
+//           "content": "Section 2.1 - Introduction to Linear Systems"
+//         },
+//         {
+//           "title": "Session4",
+//           "date": "2022-02-01",
+//           "startTime": "16:00",
+//           "endTime": "18:00",
+//           "content": "Section 2.2 - Direct Methods for Solving Linear Systems"
+//         }
+//       ]
+//     },
+//     {
+//       "week": "Week 3",
+//       "sessions": [
+//         {
+//           "title": "Session5",
+//           "date": "2022-02-06",
+//           "startTime": "16:00",
+//           "endTime": "18:00",
+//           "content": "Section 2.3 - Spanning Sets Linear Independence"
+//         },
+//         {
+//           "title": "Session6",
+//           "date": "2022-02-08",
+//           "startTime": "16:00",
+//           "endTime": "18:00",
+//           "content": "Review for Section 2.2 - Direct Methods for Solving Linear Systems and prep for quiz"
+//         }
+//       ]
+//     },
+//    {
+//       "week": "Week 4",
+//       "sessions": [
+//         {
+//           "title": "Session7",
+//           "date": "2022-02-13",
+//           "startTime": "16:00",
+//           "endTime": "18:00",
+//           "content": "Section 3.1 - Matrix Operations"
+//         },
+//        {
+//           "title": "Session8",
+//            "date": "2022-02-15",
+//            "startTime": "16:00", 
+//           "endTime": "18:00",
+//           "content": "Section 3.2 - Matrix Algebra"
+//         }
+//       ]
+//     }
+// ]`;
 
-const response =
-  "True {What is the subject or topics of this class?} {What are the specific learning objectives or outcomes for each week?} {What are the homework or assignments with their specific requirements and due dates?} {When are the exact dates for the exams?} {What are the specifics of the project or projects for this class?}";
+// const response =
+//   "True {What is the subject or topics of this class?} {What are the specific learning objectives or outcomes for each week?} {What are the homework or assignments with their specific requirements and due dates?} {When are the exact dates for the exams?} {What are the specifics of the project or projects for this class?}";
 
 const Modal = ({ addClassToList, closeModal }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -98,19 +98,19 @@ const Modal = ({ addClassToList, closeModal }) => {
     {
       role: "system",
       content:
-        "Create a week-by-week study planner for the first 4 weeks of this class, with varying amounts of study sessions per week depending on the workload (e.g., homework due, exam coming up). Each study session should include the date, duration, and specific content to cover for the next homework, exam, or project. If you need additional information to create a detailed planner with specific content for each study session, respond with the format: True {Question1} {Question2} ... {Last Question}. If you can create a specific week-by-week planner with specific content for each study session, respond in the following exact format (JSON format):" +
+        "Create a week-by-week study planner for the first 4 weeks of this class, with varying amounts of study sessions per week depending on the workload (e.g., homework due, exam coming up). Each study session should include the date, duration, and specific content to cover for the next homework, exam, or project. If you need additional information to create a detailed planner with specific content for each study session, respond with the format: True {Question1} {Question2} ... {Last Question}. If you can create a specific week-by-week planner with specific content for each study session, respond in the following exact format (JSON format). Nothing other than these exact formats should be given in the response, it must be exactly as stated in the formats given. Maximum of 2 study sessions per week" +
         `[{
           "week": "Week X",
           "sessions": [
             {
-              "title": "Study Session 1",
+              "title": "StudySessionA",
               "date": "YYYY-MM-DD",
               "startTime": "HH:MM",
               "endTime": "HH:MM",
               "content": "Specific content to cover"
             },
             {
-              "title": "Study Session 2",
+              "title": "StudySessionB",
               "date": "YYYY-MM-DD",
               "startTime": "HH:MM",
               "endTime": "HH:MM",
@@ -119,7 +119,7 @@ const Modal = ({ addClassToList, closeModal }) => {
             ...
           ]
         }
-        **Repeat for each week**
+        **Repeat for each week, label each study session the next letter, I.E: StudySession A, B, C, D, E, ... Make sure no study session's have the same title**
     ]`,
     },
   ]);
@@ -193,7 +193,11 @@ const Modal = ({ addClassToList, closeModal }) => {
         "}",
         ""
       ); // Clean up the last element
+      setQuestions(questions);
       return questions;
+    }
+    else {
+      parseCalendarResponse(response);
     }
     return [];
   };
@@ -224,16 +228,16 @@ const Modal = ({ addClassToList, closeModal }) => {
     };
     const updatedChatMessages = [...chatMessages, newMessage];
     updateChat(updatedChatMessages);
-    console.log(updatedChatMessages);
-    // const response = await openai.chat.completions.create({
-    //   model: "gpt-4",
-    //   messages: updatedChatMessages,
-    // });
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: updatedChatMessages,
+    });
     updateResponse(response);
+    console.log(response.choices[0].message.content);
     const extractedQuestions = parseResponseForQuestions(
-      response //response.choices[0].message.content
+      response.choices[0].message.content
     );
-    setQuestions(extractedQuestions);
+    
   };
 
   const readPDF = async (file) => {
@@ -264,27 +268,27 @@ const Modal = ({ addClassToList, closeModal }) => {
 
   const submitAdditionalQuestions = async (event) => {
     event.preventDefault();
-    // const answersString = questionAnswers
-    //   .map((answer, index) => `Question ${index + 1} answer: ${answer}`)
-    //   .join(" ");
-    // const newMessage = {
-    //   role: "user",
-    //   content:
-    //     "Here are the answers to the additional questions you asked. If additional questions are needed, or more clarification is needed on a certain question, give me the questions in the same format. If not then make the class schedule in the same format as given perviously" +
-    //     answersString,
-    // };
+    const answersString = questionAnswers
+      .map((answer, index) => `Question ${index + 1} answer: ${answer}`)
+      .join(" ");
+    const newMessage = {
+      role: "user",
+      content:
+        "Here are the answers to the additional questions you asked. If additional questions are needed, or more clarification is needed on a certain question, give me the questions in the same format. If not then make the class schedule in the same format as given perviously" +
+        answersString,
+    };
 
-    // const updatedChatMessages = [...chatMessages, newMessage];
-    // updateChat(updatedChatMessages);
-    // console.log(updatedChatMessages);
-    // const airesponse = await openai.chat.completions.create({
-    //   model: "gpt-4",
-    //   messages: updatedChatMessages,
-    // });
-    // console.log(airesponse.choices[0].message.content);
-    // updateResponse(airesponse.choices[0].message.content);
+    const updatedChatMessages = [...chatMessages, newMessage];
+    updateChat(updatedChatMessages);
+    console.log(updatedChatMessages);
+    const airesponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: updatedChatMessages,
+    });
+    console.log(airesponse.choices[0].message.content);
+    updateResponse(airesponse.choices[0].message.content);
 
-    const calendarEvents = parseCalendarResponse(scheduleStringResponse);
+    const calendarEvents = parseCalendarResponse(airesponse.choices[0].message.content);
     console.log(calendarEvents);
     for (let i = 0; i < calendarEvents.length; i++) {
       addCalendarEvent(calendarEvents[i]);
@@ -293,7 +297,8 @@ const Modal = ({ addClassToList, closeModal }) => {
   };
 
   const parseCalendarResponse = (response) => {
-    const parsedResponse = JSON.parse(response);
+    const cleanedResponse = response.replace(/```json|```/g, '');
+    const parsedResponse = JSON.parse(cleanedResponse);
     const events = [];
     parsedResponse.forEach((week) => {
       week.sessions.forEach((session) => {
@@ -318,7 +323,7 @@ const Modal = ({ addClassToList, closeModal }) => {
     <div className="modal open">
       <div className="modal-overlay" onClick={closeModal}></div>
       <div className="modal-container">
-        <form className="form">
+        <div className="form">
           <div className="modal-header">
             <h2>Enter Class Details</h2>
             <div className="close-icon toggleButton" onClick={closeModal}>
@@ -356,13 +361,11 @@ const Modal = ({ addClassToList, closeModal }) => {
               <>
                 <div className="input-group">
                   <input
-                    type="test"
                     name="ClassName"
                     className="input"
                     onChange={(e) => {
                       setClassName(e.target.value);
                     }}
-                    required
                   />
                   <label className="label">Name of Class</label>
                 </div>
@@ -373,7 +376,6 @@ const Modal = ({ addClassToList, closeModal }) => {
               </>
             )}
           </div>
-          {questions.length === 0 && (
             <div className="modal-footer">
               <button
                 type="button"
@@ -383,15 +385,13 @@ const Modal = ({ addClassToList, closeModal }) => {
                 Close
               </button>
               <button
-                type="submit"
                 onClick={processQuestion}
                 className="button"
               >
                 Add
               </button>
             </div>
-          )}
-        </form>
+        </div>
       </div>
     </div>
   );
