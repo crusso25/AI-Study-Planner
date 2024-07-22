@@ -25,18 +25,17 @@ header {
 }
 .page-links:hover {
     cursor: pointer;
+    text-decoration: underline;
 }
 #user-pop-up {
     position: absolute;
     border: solid 1px black;
     width: 200px;
-    height: 300px;
     right: 0px;
     margin-top: 1px;
     border-radius: 15px;
     display: flex;
     flex-direction: column;
-    justify-content: end;
     align-items: center;
     z-index: 1000;
 }
@@ -44,4 +43,37 @@ header {
     padding: 0px;
     width: 50%;
     margin-bottom: 5px;
+}
+.dropdown-item {
+    padding: 10px 15px;
+    text-align: center;
+    text-decoration: none;
+    color: black;
+    border-bottom: 1px solid #ccc;
+}
+
+.dropdown-item:hover {
+    background-color: #f0f0f0;
+}
+
+#logout-button {
+    padding: 10px 15px;
+    width: 100%;
+    border: none;
+    background-color: #ff4d4d;
+    color: white;
+    cursor: pointer;
+    border-radius: 0 0 10px 10px;
+}
+
+#logout-button:hover {
+    background-color: #cc0000;
+}
+.settings-item {
+    font-size: 0.9em; /* Smaller text for settings */
+    border-bottom: 1px solid #ccc;
+}
+
+.settings-item:hover {
+    background-color: transparent; /* No highlight on hover */
 }

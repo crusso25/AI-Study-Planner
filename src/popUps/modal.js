@@ -145,6 +145,7 @@ const Modal = ({ addClassToList, closeModal }) => {
   }, []);
 
   const processQuestion = async () => {
+    setIsLoading(true); // Show loading spinner
     const filesContent = fileContents.join("\n\n");
     const newMessage = {
       role: "user",
@@ -159,6 +160,7 @@ const Modal = ({ addClassToList, closeModal }) => {
     updateResponse(response);
     console.log(response.choices[0].message.content);
     parseResponseForQuestions(response.choices[0].message.content);
+    setIsLoading(false); // Hide loading spinner
   };
 
   const readPDF = async (file) => {
@@ -187,6 +189,7 @@ const Modal = ({ addClassToList, closeModal }) => {
 
   const submitAdditionalQuestions = async (event) => {
     event.preventDefault();
+    setIsLoading(true); // Show loading spinner
     const answersString = JSON.stringify(questionAnswers);
     const newMessage = {
       role: "user",
@@ -206,6 +209,7 @@ const Modal = ({ addClassToList, closeModal }) => {
     updateResponse(airesponse.choices[0].message.content);
 
     parseResponseForQuestions(airesponse.choices[0].message.content);
+    setIsLoading(false); // Hide loading spinner
   };
 
   const parseCalendarResponse = (response) => {
