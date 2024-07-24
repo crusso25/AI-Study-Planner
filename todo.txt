@@ -18,3 +18,10 @@ FINISHED :
 
 --Make the calendar events clickable to a pop up of that study session's material (Practice problems, content to review, recourses, ...)
 
+
+
+************
+New calendar creation method:
+--Ask user for the start date of the class.
+--Create calendar based on actual due dates first (IE: Exams, Quizes, Assignments, Projects, etc...). Mark as different colors in the calendar
+--Make the clickable events in the calendar have a button like "generate study plan" that will generate a study plan from today until 

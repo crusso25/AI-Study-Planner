@@ -14,10 +14,22 @@ const MyCalendar = () => {
   const { getSession } = useContext(AccountContext);
   const [sessionData, setSessionData] = useState(null);
   const [calendarEvents, setCalendarEvents] = useState([]);
+  const [filteredEvents, setFilteredEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [classes, setClasses] = useState([]);
+  const [eventTypes, setEventTypes] = useState([]);
   const [viewDate, setViewDate] = useState(new Date());
   const [isSidebarVisible, setSidebarVisible] = useState(true);
+  const [selectedTypes, setSelectedTypes] = useState(new Set());
+
+  const classColors = [
+    "#007bff", "#28a745", "#dc3545", "#ffc107", "#6f42c1", "#20c997", "#fd7e14", "#17a2b8"
+  ];
+
+  const getClassColor = (className) => {
+    const index = classes.indexOf(className);
+    return classColors[index % classColors.length];
+  };
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -34,8 +46,8 @@ const MyCalendar = () => {
   }, []);
 
   useEffect(() => {
-    console.log(calendarEvents);
-  }, [calendarEvents]);
+    filterEvents();
+  }, [calendarEvents, selectedTypes]);
 
   const fetchEvents = async (userSession) => {
     const idToken = userSession.getIdToken().getJwtToken();
@@ -61,12 +73,15 @@ const MyCalendar = () => {
           end: new Date(item.endDate),
           content: item.content,
           className: item.className,
+          type: item.type,
+          color: getClassColor(item.className),
         }));
         setCalendarEvents(userEvents);
-
-        // Extract unique classes
         const classSet = new Set(data.Items.map((item) => item.className));
         setClasses([...classSet]);
+        const typeSet = new Set(data.Items.map((item) => item.type));
+        setEventTypes([...typeSet]);
+        setSelectedTypes(new Set([...typeSet])); // Initially select all types
       } else {
         console.error("Failed to fetch Calendar Events:", data.error);
       }
@@ -86,19 +101,50 @@ const MyCalendar = () => {
     }
   };
 
+  const eventStyleGetter = (event) => {
+    const backgroundColor = event.color;
+    const style = {
+      backgroundColor,
+      borderRadius: '0px',
+      opacity: 0.8,
+      color: 'white',
+      border: '0px',
+      display: 'block'
+    };
+    return {
+      style: style
+    };
+  };
+
+  const handleTypeChange = (type) => {
+    const updatedTypes = new Set(selectedTypes);
+    if (updatedTypes.has(type)) {
+      updatedTypes.delete(type);
+    } else {
+      updatedTypes.add(type);
+    }
+    setSelectedTypes(updatedTypes);
+  };
+
+  const filterEvents = () => {
+    const filtered = calendarEvents.filter(event => selectedTypes.has(event.type));
+    setFilteredEvents(filtered);
+  };
+
   return (
     <div className="my-calendar-container">
       <div className={`calendar ${isSidebarVisible ? 'with-sidebar' : ''}`}>
         <Calendar
           localizer={localizer}
-          events={calendarEvents}
+          events={filteredEvents}
           startAccessor="start"
           endAccessor="end"
-          style={{ height: "90vh", width: "100%" }}
+          style={{ height: "940px", width: "100%" }}
           onSelectEvent={handleEventClick}
           defaultView="month"
           date={viewDate}
           onNavigate={date => setViewDate(date)}
+          eventPropGetter={eventStyleGetter}
         />
       </div>
       {isSidebarVisible && (
@@ -106,8 +152,24 @@ const MyCalendar = () => {
           <h3>Classes</h3>
           <ul>
             {classes.map((className, index) => (
-              <li key={index} onClick={() => handleClassClick(className)}>
+              <li className="class-button" key={index} onClick={() => handleClassClick(className)}>
+                <span className="class-color-box" style={{ backgroundColor: getClassColor(className) }}></span>
                 {className}
+              </li>
+            ))}
+          </ul>
+          <h3>Filter by Type</h3>
+          <ul className="filter-list">
+            {eventTypes.map((type, index) => (
+              <li key={index}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={selectedTypes.has(type)}
+                    onChange={() => handleTypeChange(type)}
+                  />
+                  {type}
+                </label>
               </li>
             ))}
           </ul>

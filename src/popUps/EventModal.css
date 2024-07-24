@@ -1,0 +1,38 @@
+.button:hover {
+    background-color: #4c4cd1;
+}
+
+.generate-button {
+    background-color: #28a745;
+    border-color: #218838;
+    box-shadow: #28a745 0 10px 20px -10px;
+}
+
+.generate-button:hover {
+    background-color: #218838;
+}
+
+.modal-header .class-name {
+    font-size: 0.9em;
+    color: #6c757d;
+    margin-top: 5px;
+}
+.edit-button {
+    background-color: #ffc107;
+    border-color: #e0a800;
+    box-shadow: #ffc107 0 10px 20px -10px;
+}
+
+.edit-button:hover {
+    background-color: #e0a800;
+}
+
+.continue-button {
+    background-color: #007bff;
+    border-color: #0056b3;
+    box-shadow: #007bff 0 10px 20px -10px;
+}
+
+.continue-button:hover {
+    background-color: #0056b3;
+}

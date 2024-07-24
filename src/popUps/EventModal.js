@@ -1,24 +1,55 @@
-import React from "react";
-import "./modal.css";
+import React, { useState } from 'react';
+import "./EventModal.css";
 
 const EventModal = ({ event, closeModal }) => {
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleGenerateClick = () => {
+    setIsGenerating(true);
+  };
+
   return (
     <div className="modal open">
       <div className="modal-overlay" onClick={closeModal}></div>
       <div className="modal-container">
         <div className="modal-header">
-          <h2>{event.title}</h2>
-          <div className="close-icon" onClick={closeModal}>
+          <div>
+            <h2>{event.title}</h2>
+            <p className="class-name">{event.className}</p>
+          </div>
+          <div className="close-icon toggleButton" onClick={closeModal}>
             &times;
           </div>
         </div>
         <div className="modal-content">
-          <p><strong>Start:</strong> {new Date(event.start).toLocaleString()}</p>
-          <p><strong>End:</strong> {new Date(event.end).toLocaleString()}</p>
-          <p>{event.content}</p>
+          {isGenerating ? (
+            <p><strong>Current Exam Content:</strong> {event.content}</p>
+          ) : (
+            <>
+              <p><strong>Type:</strong> {event.type}</p>
+              <p><strong>Start:</strong> {event.start.toString()}</p>
+              <p><strong>End:</strong> {event.end.toString()}</p>
+              <p><strong>Content:</strong> {event.content}</p>
+            </>
+          )}
         </div>
         <div className="modal-footer">
-          <button className="button" onClick={closeModal}>Close</button>
+          {isGenerating ? (
+            <>
+              <button className="button edit-button" onClick={() => setIsGenerating(false)}>
+                Edit Content
+              </button>
+              <button className="button continue-button" onClick={closeModal}>
+                Continue
+              </button>
+            </>
+          ) : (
+            event.type === "Exam" && (
+              <button className="button generate-button" onClick={handleGenerateClick}>
+                Generate Study Plan
+              </button>
+            )
+          )}
         </div>
       </div>
     </div>

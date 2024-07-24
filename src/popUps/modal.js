@@ -18,28 +18,30 @@ const Modal = ({ addClassToList, closeModal }) => {
     {
       role: "system",
       content:
-        "Create a week-by-week study planner for the first 4 weeks of this class, with varying amounts of study sessions per week depending on the workload (e.g., homework due, exam coming up). Each study session should include the date, duration, and specific content to cover for the next homework, exam, or project. If you need additional information to create a detailed planner with specific content for each study session, respond with the format: True {\"questions\": [\"Question1\", \"Question2\", \"Last Question\"]}. If you can create a specific week-by-week planner with specific content for each study session, respond in the following exact format (JSON format). Nothing other than these exact formats should be given in the response, it must be exactly as stated in the formats given. Maximum of 2 study sessions per week" +
+        "Given information on this class, extract the due dates for the whole semester (Exams, Quizes, Projects, Assignments, etc...). If you need additional information, respond with the format: True {\"questions\": [\"Question1\", \"Question2\", \"Last Question\"]}. If enough information is given the, give your response in this exact format (JSON format). Nothing other than these exact formats should be given in the response, it must be exactly as stated in the formats given." +
         `[{
           "week": "Week X",
           "sessions": [
             {
-              "title": "StudySessionA",
+              "title": "Exam/Quiz/Project/Assignment-1",
               "date": "YYYY-MM-DD",
               "startTime": "HH:MM",
               "endTime": "HH:MM",
-              "content": "Specific content to cover"
+              "content": "Specific content to cover",
+              "type": "(Exam/Quiz/Project/Assignment etc...)"
             },
             {
-              "title": "StudySessionB",
+              "title": "Exam/Quiz/Project/Assignment-1",
               "date": "YYYY-MM-DD",
               "startTime": "HH:MM",
               "endTime": "HH:MM",
-              "content": "Specific content to cover"
+              "content": "Specific content to cover",
+              "type": "(Exam/Quiz/Project/Assignment etc...)"
             }
             ...
           ]
         }
-        **Repeat for each week, label each study session the next letter, I.E: StudySession A, B, C, D, E, ... Make sure no study session's have the same title**
+        **Repeat for each week, make sure that no title has the same name for any session. For testing purposes make start time 10:00 and end time 12:00.**
     ]`,
     },
   ]);
@@ -47,7 +49,8 @@ const Modal = ({ addClassToList, closeModal }) => {
   const [chatResponse, updateResponse] = useState("");
   const [questions, setQuestions] = useState([]);
   const [questionAnswers, setQuestionAnswers] = useState({});
-  const { setCalendarEvents } = useContext(CalendarContext);
+  const [calendarEvents, setCalendarEvents] = useState([]);
+  const [reviewStep, setReviewStep] = useState(0);
   const { getSession } = useContext(AccountContext);
   const [sessionData, setSessionData] = useState(null);
 
@@ -88,6 +91,7 @@ const Modal = ({ addClassToList, closeModal }) => {
               endDate: calendarEvent.endDate,
               content: calendarEvent.content,
               className: calendarEvent.className,
+              type: calendarEvent.type,
             }),
           }
         );
@@ -105,7 +109,7 @@ const Modal = ({ addClassToList, closeModal }) => {
     }
   };
 
-  const parseResponseForQuestions = (response) => {
+  const parseResponse = async (response) => {
     if (response.startsWith("True")) {
       const jsonResponse = response.substring(5);
       const parsedQuestions = JSON.parse(jsonResponse);
@@ -113,17 +117,25 @@ const Modal = ({ addClassToList, closeModal }) => {
       return parsedQuestions.questions;
     } else {
       const calendarEvents = parseCalendarResponse(response);
-      for (let i = 0; i < calendarEvents.length; i++) {
-        addCalendarEvent(calendarEvents[i]);
-      }
-      setQuestions([]);
+      setCalendarEvents(calendarEvents);
+      setReviewStep(1); // Start the review process
+      // setQuestions([]);
+      // setQuestionAnswers([]);
     }
     return [];
   };
 
+  const addEventsForUser = async (calendarEvents) => {
+    setIsLoading(true);
+    for (let i = 0; i < calendarEvents.length; i++) {
+      await addCalendarEvent(calendarEvents[i]);
+    }
+    setIsLoading(false);
+  }
+
   const onFilesAdded = useCallback((files) => {
     setUploadedFiles(files);
-    setIsLoading(true); // Show loading spinner
+    setIsLoading(true);
     const readers = files.map(async (file) => {
       if (file.type === "application/pdf") {
         return await readPDF(file);
@@ -136,16 +148,16 @@ const Modal = ({ addClassToList, closeModal }) => {
     Promise.all(readers)
       .then((contents) => {
         setFileContents(contents);
-        setIsLoading(false); // Hide loading spinner
+        setIsLoading(false);
       })
       .catch((error) => {
         console.error("Error reading files:", error);
-        setIsLoading(false); // Hide loading spinner
+        setIsLoading(false);
       });
   }, []);
 
   const processQuestion = async () => {
-    setIsLoading(true); // Show loading spinner
+    setIsLoading(true);
     const filesContent = fileContents.join("\n\n");
     const newMessage = {
       role: "user",
@@ -159,8 +171,8 @@ const Modal = ({ addClassToList, closeModal }) => {
     });
     updateResponse(response);
     console.log(response.choices[0].message.content);
-    parseResponseForQuestions(response.choices[0].message.content);
-    setIsLoading(false); // Hide loading spinner
+    await parseResponse(response.choices[0].message.content);
+    setIsLoading(false);
   };
 
   const readPDF = async (file) => {
@@ -189,7 +201,7 @@ const Modal = ({ addClassToList, closeModal }) => {
 
   const submitAdditionalQuestions = async (event) => {
     event.preventDefault();
-    setIsLoading(true); // Show loading spinner
+    setIsLoading(true);
     const answersString = JSON.stringify(questionAnswers);
     const newMessage = {
       role: "user",
@@ -208,8 +220,8 @@ const Modal = ({ addClassToList, closeModal }) => {
     console.log(airesponse.choices[0].message.content);
     updateResponse(airesponse.choices[0].message.content);
 
-    parseResponseForQuestions(airesponse.choices[0].message.content);
-    setIsLoading(false); // Hide loading spinner
+    parseResponse(airesponse.choices[0].message.content);
+    setIsLoading(false);
   };
 
   const parseCalendarResponse = (response) => {
@@ -224,20 +236,71 @@ const Modal = ({ addClassToList, closeModal }) => {
           endDate: new Date(`${session.date}T${session.endTime}:00`),
           content: session.content,
           className: className,
+          type: session.type,
         });
       });
     });
+    return events;
+  };
+
+  const submitEvents = async () => {
+    await addEventsForUser(calendarEvents);
     closeModal();
     setQuestions([]);
     setQuestionAnswers([]);
     addClassToList(className);
     setClassName("");
-    return events;
+    setCalendarEvents([]);
+  }
+
+  const eventTypes = ["Exam", "Quiz", "Project", "Assignment"]; // Add more types as needed
+
+  const renderReviewStep = () => {
+    if (reviewStep > eventTypes.length) {
+      return (
+        <>
+          <div className="modal-content">
+            <h2>All Events Reviewed</h2>
+          </div>
+          <div className="modal-footer">
+            <button className="button" onClick={submitEvents}>
+              Finish
+            </button>
+          </div>
+        </>
+      );
+    }
+
+    const currentType = eventTypes[reviewStep - 1];
+    const eventsOfType = calendarEvents.filter(event => event.type.toLowerCase() === currentType.toLowerCase());
+
+    return (
+      <>
+        <div className="modal-content">
+          <h2>Review {currentType}s</h2>
+          {eventsOfType.map((event, index) => (
+            <div key={index} className="event-review">
+              <p><strong>Title:</strong> {event.title}</p>
+              <p><strong>Date:</strong> {event.startDate.toString()}</p>
+              <p><strong>Content:</strong> {event.content}</p>
+            </div>
+          ))}
+        </div>
+        <div className="modal-footer">
+          <button className="button edit-button">
+            Edit
+          </button>
+          <button className="button continue-button" onClick={() => setReviewStep(reviewStep + 1)}>
+            Continue
+          </button>
+        </div>
+      </>
+    );
   };
 
   return (
     <div className="modal open">
-      <div className="modal-overlay" onClick={closeModal}></div>
+      <div className="modal-overlay"></div>
       <div className="modal-container">
         {isLoading && <div className="loading-overlay"><div className="spinner"></div></div>}
         <div className={`form ${isLoading ? "blurred" : ""}`}>
@@ -247,56 +310,59 @@ const Modal = ({ addClassToList, closeModal }) => {
               &times;
             </div>
           </div>
-          <div className="modal-content">
-            {questions.length !== 0 ? (
-              <>
-                <h2>Please answer additional questions</h2>
-                {questions.map((question, index) => (
-                  <div className="row" key={index}>
-                    <div className="input-group">
-                      <input
-                        type="text"
-                        name={question}
-                        className="input"
-                        onChange={(e) => {
-                          updateAnswersArray(e.target.value, question);
-                        }}
-                        required
-                      />
-                      <label className="label">{question}</label>
+          {reviewStep === 0 && (
+            <div className="modal-content">
+              {questions.length !== 0 ? (
+                <>
+                  <h2>Please answer additional questions</h2>
+                  {questions.map((question, index) => (
+                    <div className="row" key={index}>
+                      <div className="input-group">
+                        <input
+                          type="text"
+                          name={question}
+                          className="input"
+                          onChange={(e) => {
+                            updateAnswersArray(e.target.value, question);
+                          }}
+                          required
+                        />
+                        <label className="label">{question}</label>
+                      </div>
                     </div>
+                  ))}
+                  <button className="button" onClick={submitAdditionalQuestions}>
+                    Submit
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="input-group">
+                    <input
+                      name="ClassName"
+                      className="input"
+                      onChange={(e) => {
+                        setClassName(e.target.value);
+                      }}
+                    />
+                    <label className="label">Name of Class</label>
                   </div>
-                ))}
-                <button className="button" onClick={submitAdditionalQuestions}>
-                  Submit
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="input-group">
-                  <input
-                    name="ClassName"
-                    className="input"
-                    onChange={(e) => {
-                      setClassName(e.target.value);
-                    }}
-                  />
-                  <label className="label">Name of Class</label>
-                </div>
-                <div id="drag-and-drop">
-                  <DragDrop onFilesAdded={onFilesAdded} />
-                  <br />
-                </div>
-              </>
-            )}
-          </div>
-          {questions.length === 0 && (
+                  <div id="drag-and-drop">
+                    <DragDrop onFilesAdded={onFilesAdded} />
+                    <br />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+          {questions.length === 0 && reviewStep === 0 && (
             <div className="modal-footer">
               <button onClick={processQuestion} className="button">
                 Add
               </button>
             </div>
           )}
+          {reviewStep > 0 && renderReviewStep()}
         </div>
       </div>
     </div>
