@@ -264,7 +264,7 @@ const MyCalendar = () => {
     });
     const studySessions = await parseCalendarResponse(response.choices[0].message.content, examEvent.className);
 
-    
+
     for (const session of studySessions) {
       await addCalendarEvent(session);
     }
@@ -272,6 +272,9 @@ const MyCalendar = () => {
     const updatedCalendarEvents = [...calendarEvents, ...studySessions];
     setCalendarEvents(updatedCalendarEvents);
     setFilteredEvents(updatedCalendarEvents.filter(event => selectedTypes.has(event.type)));
+
+    const session = await getSession();
+    await fetchEvents(session);
 
     if (!eventTypes.includes("Study Session")) {
       setEventTypes([...eventTypes, "Study Session"]);
