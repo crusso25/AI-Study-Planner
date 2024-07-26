@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import "./EventModal.css";
 import { AccountContext } from "../Account";
+import Latex from 'react-latex-next'; // Import react-latex-next
 
 const EventModal = ({ event, closeModal, updateEventContent, addStudySessions }) => {
   const { getSession } = useContext(AccountContext);
@@ -70,6 +71,22 @@ const EventModal = ({ event, closeModal, updateEventContent, addStudySessions })
     setIsLoading(false);
   };
 
+  const formatContent = (content) => {
+    // Replace **bold** with <b>bold</b> and add a new line before the bold text
+    let formattedContent = content.replace(/\*\*(.*?)\*\*/g, '<br/><b>$1</b>');
+
+    // Handle numbered list
+    formattedContent = formattedContent.replace(/(\d+\.)/g, '<br/>$1');
+
+    // Handle dashes for lists
+    formattedContent = formattedContent.replace(/-\s/g, '<br/>- ');
+
+    // Handle new lines for consistency
+    formattedContent = formattedContent.replace(/\n/g, '<br/>');
+
+    return formattedContent;
+  };
+
   return (
     <div className="modal open">
       <div className="modal-overlay"></div>
@@ -94,13 +111,13 @@ const EventModal = ({ event, closeModal, updateEventContent, addStudySessions })
                   <button className="button done-button" onClick={handleDoneClick}>Done</button>
                 </>
               ) : (
-                <p>{content}</p>
+                <Latex>{formatContent(content)}</Latex>
               )}
             </>
           ) : (
             <>
               <p><strong>Type:</strong> {event.type}</p>
-              <p><strong>Content:</strong> {event.content}</p>
+              <p><strong>Content:</strong> <Latex>{formatContent(event.content)}</Latex></p>
             </>
           )}
         </div>

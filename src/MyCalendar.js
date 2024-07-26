@@ -33,14 +33,14 @@ const MyCalendar = () => {
               "date": "YYYY-MM-DD",
               "startTime": "HH:MM",
               "endTime": "HH:MM",
-              "content": "Specific content to cover"
+              "content": "Content to study"
             },
             {
               "title": "Exam (1/2/3...) Study Session B",
               "date": "YYYY-MM-DD",
               "startTime": "HH:MM",
               "endTime": "HH:MM",
-              "content": "Specific content to cover"
+              "content": "Content to study"
             }
             ...
           ]
@@ -51,7 +51,14 @@ const MyCalendar = () => {
   ]);
 
   const classColors = [
-    "#007bff", "#28a745", "#dc3545", "#ffc107", "#6f42c1", "#20c997", "#fd7e14", "#17a2b8"
+    "#007bff",
+    "#28a745",
+    "#dc3545",
+    "#ffc107",
+    "#6f42c1",
+    "#20c997",
+    "#fd7e14",
+    "#17a2b8",
   ];
 
   const getClassColor = (className) => {
@@ -123,7 +130,9 @@ const MyCalendar = () => {
   };
 
   const handleClassClick = (className) => {
-    const classEvents = calendarEvents.filter(event => event.className === className);
+    const classEvents = calendarEvents.filter(
+      (event) => event.className === className
+    );
     if (classEvents.length > 0) {
       setViewDate(classEvents[0].start);
     }
@@ -133,14 +142,14 @@ const MyCalendar = () => {
     const backgroundColor = event.color;
     const style = {
       backgroundColor,
-      borderRadius: '0px',
+      borderRadius: "0px",
       opacity: 0.8,
-      color: 'white',
-      border: '0px',
-      display: 'block'
+      color: "white",
+      border: "0px",
+      display: "block",
     };
     return {
-      style: style
+      style: style,
     };
   };
 
@@ -155,7 +164,9 @@ const MyCalendar = () => {
   };
 
   const filterEvents = () => {
-    const filtered = calendarEvents.filter(event => selectedTypes.has(event.type));
+    const filtered = calendarEvents.filter((event) =>
+      selectedTypes.has(event.type)
+    );
     setFilteredEvents(filtered);
   };
 
@@ -171,7 +182,11 @@ const MyCalendar = () => {
             Authorization: idToken,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ userId: userId, title: event.title, content: newContent }),
+          body: JSON.stringify({
+            userId: userId,
+            title: event.title,
+            content: newContent,
+          }),
         }
       );
       const data = await response.json();
@@ -187,7 +202,7 @@ const MyCalendar = () => {
 
   const updateEventContent = async (event, newContent) => {
     await editUserEvent(event, newContent);
-    const updatedEvents = calendarEvents.map(e =>
+    const updatedEvents = calendarEvents.map((e) =>
       e === event ? { ...e, content: newContent } : e
     );
     setCalendarEvents(updatedEvents);
@@ -195,7 +210,7 @@ const MyCalendar = () => {
   };
 
   const parseCalendarResponse = async (response, className) => {
-    const cleanedResponse = response.replace(/```json|```/g, '');
+    const cleanedResponse = response.replace(/```json|```/g, "");
     const parsedResponse = JSON.parse(cleanedResponse);
     const events = [];
     parsedResponse.forEach((week) => {
@@ -252,26 +267,68 @@ const MyCalendar = () => {
   };
 
   const addStudySessions = async (classContent, examEvent) => {
-    const newMessage = {
+    const initialMessage = {
       role: "user",
       content: `The class is ${examEvent.className}, the date of this exam is ${examEvent.startDate}. This is the content that is covered on this exam: ${examEvent.content}. This is the content for the entire class: ${classContent}`,
     };
-    const updatedChatMessages = [...chatMessages, newMessage];
+    const updatedChatMessages = [...chatMessages, initialMessage];
     updateChat(updatedChatMessages);
-    const response = await openai.chat.completions.create({
+
+    const initialResponse = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: updatedChatMessages,
     });
-    const studySessions = await parseCalendarResponse(response.choices[0].message.content, examEvent.className);
 
+    const studySessions = await parseCalendarResponse(
+      initialResponse.choices[0].message.content,
+      examEvent.className
+    );
 
-    for (const session of studySessions) {
+    for (let session of studySessions) {
+      const specificMessage = {
+        role: "user",
+        content: `The class is ${examEvent.className}, and this is the content for the study session titled "${session.title}": ${session.content}. Please provide detailed information and key concepts needed to master this content in the following JSON format. Nothing other than these exact formats should be given in the response, it must be exactly as stated in the format given: 
+        {
+          "additionalContent": "Detailed information and key concepts to master this session's content that you generate in your response"
+        }`,
+      };
+
+      const specificChatMessages = [...updatedChatMessages, specificMessage];
+      const specificResponse = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: specificChatMessages,
+      });
+
+      let specificContent;
+      try {
+        let cleanedResponse = specificResponse.choices[0].message.content
+          .replace(/```json|```/g, "")
+          .trim();
+      
+        
+        const additionalContentMatch = cleanedResponse.match(/"additionalContent"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+      
+        if (additionalContentMatch && additionalContentMatch[1]) {
+          specificContent = additionalContentMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
+        } else {
+          console.error("Error extracting additional content.");
+          specificContent = "Error extracting additional content.";
+        }
+      } catch (error) {
+        console.error("Error processing response:", error);
+        specificContent = "Error processing additional content.";
+      }
+      
+
+      session.content += `\n\nDetailed Content:\n${specificContent}`;
       await addCalendarEvent(session);
     }
 
     const updatedCalendarEvents = [...calendarEvents, ...studySessions];
     setCalendarEvents(updatedCalendarEvents);
-    setFilteredEvents(updatedCalendarEvents.filter(event => selectedTypes.has(event.type)));
+    setFilteredEvents(
+      updatedCalendarEvents.filter((event) => selectedTypes.has(event.type))
+    );
 
     const session = await getSession();
     await fetchEvents(session);
@@ -284,7 +341,7 @@ const MyCalendar = () => {
 
   return (
     <div className="my-calendar-container">
-      <div className={`calendar ${isSidebarVisible ? 'with-sidebar' : ''}`}>
+      <div className={`calendar ${isSidebarVisible ? "with-sidebar" : ""}`}>
         <Calendar
           localizer={localizer}
           events={filteredEvents}
@@ -294,7 +351,7 @@ const MyCalendar = () => {
           onSelectEvent={handleEventClick}
           defaultView="month"
           date={viewDate}
-          onNavigate={date => setViewDate(date)}
+          onNavigate={(date) => setViewDate(date)}
           eventPropGetter={eventStyleGetter}
         />
       </div>
@@ -303,8 +360,15 @@ const MyCalendar = () => {
           <h3>Classes</h3>
           <ul>
             {classes.map((className, index) => (
-              <li className="class-button" key={index} onClick={() => handleClassClick(className)}>
-                <span className="class-color-box" style={{ backgroundColor: getClassColor(className) }}></span>
+              <li
+                className="class-button"
+                key={index}
+                onClick={() => handleClassClick(className)}
+              >
+                <span
+                  className="class-color-box"
+                  style={{ backgroundColor: getClassColor(className) }}
+                ></span>
                 {className}
               </li>
             ))}
@@ -330,7 +394,7 @@ const MyCalendar = () => {
         className="toggle-sidebar-button"
         onClick={() => setSidebarVisible(!isSidebarVisible)}
       >
-        {isSidebarVisible ? 'Hide Classes' : 'Show Classes'}
+        {isSidebarVisible ? "Hide Classes" : "Show Classes"}
       </button>
       {selectedEvent && (
         <EventModal
