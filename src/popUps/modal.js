@@ -4,13 +4,10 @@ import DragDrop from "./DragDrop";
 import openai from "../openai";
 import * as pdfjsLib from "pdfjs-dist";
 import Tesseract from "tesseract.js";
-import { CalendarContext } from "../CalendarContext";
 import { AccountContext } from "../Account";
 
 const Modal = ({ addClassToList, closeModal }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [className, setClassName] = useState("");
-  const [duration, setDuration] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [fileContents, setFileContents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -51,6 +48,7 @@ const Modal = ({ addClassToList, closeModal }) => {
   const [questionAnswers, setQuestionAnswers] = useState({});
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [reviewStep, setReviewStep] = useState(0);
+  const [isEditing, setIsEditing] = useState({});
   const { getSession } = useContext(AccountContext);
   const [sessionData, setSessionData] = useState(null);
 
@@ -118,20 +116,16 @@ const Modal = ({ addClassToList, closeModal }) => {
     } else {
       const calendarEvents = parseCalendarResponse(response);
       setCalendarEvents(calendarEvents);
-      setReviewStep(1); // Start the review process
-      // setQuestions([]);
-      // setQuestionAnswers([]);
+      setReviewStep(1);
     }
     return [];
   };
 
   const addEventsForUser = async (calendarEvents) => {
-    setIsLoading(true);
     for (let i = 0; i < calendarEvents.length; i++) {
       await addCalendarEvent(calendarEvents[i]);
     }
-    setIsLoading(false);
-  }
+  };
 
   const onFilesAdded = useCallback((files) => {
     setUploadedFiles(files);
@@ -244,16 +238,33 @@ const Modal = ({ addClassToList, closeModal }) => {
   };
 
   const submitEvents = async () => {
+    setIsLoading(true);
     await addEventsForUser(calendarEvents);
+    await addClassToList(className, fileContents);
+    setClassName("");
     closeModal();
     setQuestions([]);
     setQuestionAnswers([]);
-    addClassToList(className);
-    setClassName("");
     setCalendarEvents([]);
-  }
+    setIsLoading(false);
+    setFileContents("");
+  };
 
-  const eventTypes = ["Exam", "Quiz", "Project", "Assignment"]; // Add more types as needed
+  const eventTypes = ["Exam", "Quiz", "Project", "Assignment"];
+
+  const handleEditClick = (index) => {
+    setIsEditing((prev) => ({ ...prev, [index]: true }));
+  };
+
+  const handleContentChange = (event, globalIndex) => {
+    const updatedEvents = [...calendarEvents];
+    updatedEvents[globalIndex].content = event.target.value;
+    setCalendarEvents(updatedEvents);
+  };
+
+  const handleDoneClick = (index) => {
+    setIsEditing((prev) => ({ ...prev, [index]: false }));
+  };
 
   const renderReviewStep = () => {
     if (reviewStep > eventTypes.length) {
@@ -276,20 +287,50 @@ const Modal = ({ addClassToList, closeModal }) => {
 
     return (
       <>
+        <div className="modal-header">
+        <h2>Review {currentType} Information</h2>
+          <div className="close-icon toggleButton" onClick={closeModal}>
+            &times;
+          </div>
+        </div>
         <div className="modal-content">
-          <h2>Review {currentType}s</h2>
-          {eventsOfType.map((event, index) => (
-            <div key={index} className="event-review">
-              <p><strong>Title:</strong> {event.title}</p>
-              <p><strong>Date:</strong> {event.startDate.toString()}</p>
-              <p><strong>Content:</strong> {event.content}</p>
-            </div>
-          ))}
+          <span>Please make sure that all {currentType}s for this class were picked up. </span>
+          {currentType =="Exam" && (<p>Make sure that all of the content covered on the exams is included. This will make the generated study plans more helpful.</p>)}
+          {eventsOfType.map((event, index) => {
+            const globalIndex = calendarEvents.indexOf(event);
+            return (
+              <div key={index} className="event-review">
+                <p className="event-title">{event.title}</p>
+                <p className="event-date">
+                  {event.startDate.toLocaleDateString("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </p>
+                {isEditing[globalIndex] ? (
+                  <>
+                    <textarea
+                      value={event.content}
+                      onChange={(e) => handleContentChange(e, globalIndex)}
+                    />
+                    <button className="button done-button" onClick={() => handleDoneClick(globalIndex)}>
+                      Done
+                    </button>
+                  </>
+                ) : (
+                  <p>{event.content}</p>
+                )}
+                {!isEditing[globalIndex] && (
+                  <button className="button edit-button" onClick={() => handleEditClick(globalIndex)}>
+                    Edit
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
         <div className="modal-footer">
-          <button className="button edit-button">
-            Edit
-          </button>
           <button className="button continue-button" onClick={() => setReviewStep(reviewStep + 1)}>
             Continue
           </button>
@@ -304,56 +345,58 @@ const Modal = ({ addClassToList, closeModal }) => {
       <div className="modal-container">
         {isLoading && <div className="loading-overlay"><div className="spinner"></div></div>}
         <div className={`form ${isLoading ? "blurred" : ""}`}>
-          <div className="modal-header">
-            <h2>Enter Class Details</h2>
-            <div className="close-icon toggleButton" onClick={closeModal}>
-              &times;
-            </div>
-          </div>
           {reviewStep === 0 && (
-            <div className="modal-content">
-              {questions.length !== 0 ? (
-                <>
-                  <h2>Please answer additional questions</h2>
-                  {questions.map((question, index) => (
-                    <div className="row" key={index}>
-                      <div className="input-group">
-                        <input
-                          type="text"
-                          name={question}
-                          className="input"
-                          onChange={(e) => {
-                            updateAnswersArray(e.target.value, question);
-                          }}
-                          required
-                        />
-                        <label className="label">{question}</label>
+            <>
+              <div className="modal-header">
+                <h2>Enter Class Details</h2>
+                <div className="close-icon toggleButton" onClick={closeModal}>
+                  &times;
+                </div>
+              </div>
+              <div className="modal-content">
+                {questions.length !== 0 ? (
+                  <>
+                    <h2>Please answer additional questions</h2>
+                    {questions.map((question, index) => (
+                      <div className="row" key={index}>
+                        <div className="input-group">
+                          <input
+                            type="text"
+                            name={question}
+                            className="input"
+                            onChange={(e) => {
+                              updateAnswersArray(e.target.value, question);
+                            }}
+                            required
+                          />
+                          <label className="label">{question}</label>
+                        </div>
                       </div>
+                    ))}
+                    <button className="button" onClick={submitAdditionalQuestions}>
+                      Submit
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="input-group">
+                      <input
+                        name="ClassName"
+                        className="input"
+                        onChange={(e) => {
+                          setClassName(e.target.value);
+                        }}
+                      />
+                      <label className="label">Name of Class</label>
                     </div>
-                  ))}
-                  <button className="button" onClick={submitAdditionalQuestions}>
-                    Submit
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div className="input-group">
-                    <input
-                      name="ClassName"
-                      className="input"
-                      onChange={(e) => {
-                        setClassName(e.target.value);
-                      }}
-                    />
-                    <label className="label">Name of Class</label>
-                  </div>
-                  <div id="drag-and-drop">
-                    <DragDrop onFilesAdded={onFilesAdded} />
-                    <br />
-                  </div>
-                </>
-              )}
-            </div>
+                    <div id="drag-and-drop">
+                      <DragDrop onFilesAdded={onFilesAdded} />
+                      <br />
+                    </div>
+                  </>
+                )}
+              </div>
+            </>
           )}
           {questions.length === 0 && reviewStep === 0 && (
             <div className="modal-footer">

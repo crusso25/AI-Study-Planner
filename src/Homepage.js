@@ -59,7 +59,7 @@ const Homepage = () => {
     }
   };
 
-  const addClass = async (newClass) => {
+  const addClass = async (newClass, classContent) => {
     if (sessionData) {
       const idToken = sessionData.getIdToken().getJwtToken();
       const userId = sessionData.getIdToken().payload.sub;
@@ -75,6 +75,7 @@ const Homepage = () => {
             body: JSON.stringify({
               userId: userId,
               className: newClass,
+              classContent: classContent,
             }),
           }
         );
@@ -120,8 +121,8 @@ const Homepage = () => {
       </div>
       {isAddClassModalOpen && (
         <Modal
-          addClassToList={(className) => {
-            addClass(className);
+          addClassToList={(className, classContent) => {
+            addClass(className, classContent);
             setAddClassModalOpen(false);
           }}
           closeModal={() => setAddClassModalOpen(false)}
