@@ -69,3 +69,14 @@
 .clickable:hover {
   background-color: #e6e6e6;
 }
+
+.event-list-header {
+  width: 100%;
+  display: flex;
+}
+
+.class-summary-container .event-type-container .btn-sm {
+  font-size: 0.9rem;
+  padding: 0.25rem 0.5rem;
+  margin-left: 10px;
+}

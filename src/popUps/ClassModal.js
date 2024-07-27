@@ -2,10 +2,12 @@ import React, { useState, useContext, useEffect } from "react";
 import "./modal.css";
 import "./ClassModal.css";
 import EventModal from "./EventModal";
+import AddEventModal from "./AddEventModal";
 import { AccountContext } from "../Account";
 
-const ClassModal = ({ className, closeModal, deleteClass, calendarEvents }) => {
+const ClassModal = ({ className, closeModal, deleteClass, calendarEvents, fetchEvents }) => {
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [addingEventType, setAddingEventType] = useState(null);
   const { getSession } = useContext(AccountContext);
   const [sessionData, setSessionData] = useState(null);
 
@@ -70,6 +72,40 @@ const ClassModal = ({ className, closeModal, deleteClass, calendarEvents }) => {
     }
   };
 
+  const addCalendarEvent = async (calendarEvent, session) => {
+    const idToken = session.getIdToken().getJwtToken();
+    const userId = session.getIdToken().payload.sub;
+    try {
+      const response = await fetch(
+        "https://yloqq6vtu4.execute-api.us-east-2.amazonaws.com/test/addCalendarEvents/",
+        {
+          method: "POST",
+          headers: {
+            Authorization: idToken,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: userId,
+            title: calendarEvent.title,
+            startDate: calendarEvent.startDate,
+            endDate: calendarEvent.endDate,
+            content: calendarEvent.content,
+            className: calendarEvent.className,
+            type: calendarEvent.type,
+          }),
+        }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        console.log("Response from API:", data);
+      } else {
+        console.error("Failed to add class:", data.error);
+      }
+    } catch (err) {
+      console.error("Error adding class:", err);
+    }
+  };
+
   return (
     <>
       <div className="modal open">
@@ -86,7 +122,15 @@ const ClassModal = ({ className, closeModal, deleteClass, calendarEvents }) => {
               {Object.keys(eventsByType).map((type) => (
                 <div className="event-type-container">
                   <div className="event-list" key={type}>
-                    <h4>{type}s</h4>
+                    <div className="event-list-header">
+                      <h4>{type}s</h4>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => setAddingEventType(type)}
+                      >
+                        Add
+                      </button>
+                    </div>
                     <ul className="no-bullet">
                       {eventsByType[type].map((event, index) => (
                         <li
@@ -127,6 +171,15 @@ const ClassModal = ({ className, closeModal, deleteClass, calendarEvents }) => {
           }}
           addStudySessions={null}
           backToClassModal={() => setSelectedEvent(null)}
+        />
+      )}
+      {addingEventType && (
+        <AddEventModal
+          className={className}
+          eventType={addingEventType}
+          closeModal={() => setAddingEventType(null)}
+          addEvent={addCalendarEvent}
+          fetchEvents={fetchEvents}
         />
       )}
     </>

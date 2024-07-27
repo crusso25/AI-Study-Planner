@@ -5,6 +5,7 @@ import openai from "../openai";
 import * as pdfjsLib from "pdfjs-dist";
 import Tesseract from "tesseract.js";
 import { AccountContext } from "../Account";
+import AddEventModal from "./AddEventModal";
 
 const Modal = ({ addClassToList, closeModal }) => {
   const [className, setClassName] = useState("");
@@ -15,7 +16,7 @@ const Modal = ({ addClassToList, closeModal }) => {
     {
       role: "system",
       content:
-        "Given information on this class, extract the due dates for the whole semester (Exams, Quizes, Projects, Assignments, etc...). If you need additional information, respond with the format: True {\"questions\": [\"Question1\", \"Question2\", \"Last Question\"]}. If enough information is given the, give your response in this exact format (JSON format). Nothing other than these exact formats should be given in the response, it must be exactly as stated in the formats given." +
+        'Given information on this class, extract the due dates for the whole semester (Exams, Quizes, Projects, Assignments, etc...). If you need additional information, respond with the format: True {"questions": ["Question1", "Question2", "Last Question"]}. If enough information is given the, give your response in this exact format (JSON format). Nothing other than these exact formats should be given in the response, it must be exactly as stated in the formats given.' +
         `[{
           "week": "Week X",
           "sessions": [
@@ -24,7 +25,7 @@ const Modal = ({ addClassToList, closeModal }) => {
               "date": "YYYY-MM-DD",
               "startTime": "HH:MM",
               "endTime": "HH:MM",
-              "content": "Specific content to cover",
+              "content": "Content covered for this event",
               "type": "(Exam/Quiz/Project/Assignment etc...)"
             },
             {
@@ -32,7 +33,7 @@ const Modal = ({ addClassToList, closeModal }) => {
               "date": "YYYY-MM-DD",
               "startTime": "HH:MM",
               "endTime": "HH:MM",
-              "content": "Specific content to cover",
+              "content": "Content covered for this event",
               "type": "(Exam/Quiz/Project/Assignment etc...)"
             }
             ...
@@ -51,6 +52,7 @@ const Modal = ({ addClassToList, closeModal }) => {
   const [isEditing, setIsEditing] = useState({});
   const { getSession } = useContext(AccountContext);
   const [sessionData, setSessionData] = useState(null);
+  const [addingEventType, setAddingEventType] = useState(null);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -219,7 +221,7 @@ const Modal = ({ addClassToList, closeModal }) => {
   };
 
   const parseCalendarResponse = (response) => {
-    const cleanedResponse = response.replace(/```json|```/g, '');
+    const cleanedResponse = response.replace(/```json|```/g, "");
     const parsedResponse = JSON.parse(cleanedResponse);
     const events = [];
     parsedResponse.forEach((week) => {
@@ -250,10 +252,23 @@ const Modal = ({ addClassToList, closeModal }) => {
     setFileContents("");
   };
 
-  const eventTypes = ["Exam", "Quiz", "Project", "Assignment"];
+  const eventTypes = ["Exam", "Project", "Assignment"];
 
   const handleEditClick = (index) => {
     setIsEditing((prev) => ({ ...prev, [index]: true }));
+  };
+
+  const handleTitleChange = (e, globalIndex) => {
+    const updatedEvents = [...calendarEvents];
+    updatedEvents[globalIndex].title = e.target.value;
+    setCalendarEvents(updatedEvents);
+  };
+
+  const handleDateChange = (e, globalIndex) => {
+    const updatedEvents = [...calendarEvents];
+    updatedEvents[globalIndex].startDate = new Date(e.target.value);
+    updatedEvents[globalIndex].endDate = new Date(e.target.value);
+    setCalendarEvents(updatedEvents);
   };
 
   const handleContentChange = (event, globalIndex) => {
@@ -283,19 +298,35 @@ const Modal = ({ addClassToList, closeModal }) => {
     }
 
     const currentType = eventTypes[reviewStep - 1];
-    const eventsOfType = calendarEvents.filter(event => event.type.toLowerCase() === currentType.toLowerCase());
+    const eventsOfType = calendarEvents.filter(
+      (event) => event.type.toLowerCase() === currentType.toLowerCase()
+    );
 
     return (
       <>
         <div className="modal-header">
-        <h2>Review {currentType} Information</h2>
+          <h2>Review {currentType} Information</h2>
           <div className="close-icon toggleButton" onClick={closeModal}>
             &times;
           </div>
         </div>
         <div className="modal-content">
-          <span>Please make sure that all {currentType}s for this class were picked up. </span>
-          {currentType =="Exam" && (<p>Make sure that all of the content covered on the exams is included. This will make the generated study plans more helpful.</p>)}
+          <span>
+            Please make sure that all {currentType}s for this class were picked
+            up.{" "}
+          </span>
+          {currentType == "Exam" && (
+            <p>
+              Make sure that all of the content covered on the exams is
+              included. This will make the generated study plans more helpful.
+            </p>
+          )}
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={() => setAddingEventType(currentType)}
+          >
+            Add
+          </button>
           {eventsOfType.map((event, index) => {
             const globalIndex = calendarEvents.indexOf(event);
             return (
@@ -308,8 +339,33 @@ const Modal = ({ addClassToList, closeModal }) => {
                     day: "numeric",
                   })}
                 </p>
+                {addingEventType && (
+                  <AddEventModal
+                    className={className}
+                    eventType={currentType}
+                    closeModal={() => {
+                      setAddingEventType(false);
+                    }}
+                    addEvent={async (newEvent, session) => {
+                      const updatedEvents = [...calendarEvents, newEvent];
+                      setCalendarEvents(updatedEvents);
+                      console.log(updatedEvents);
+                    }}
+                    fetchEvents={null}
+                  />
+                )}
                 {isEditing[globalIndex] ? (
                   <>
+                    <input
+                      type="text"
+                      value={event.title}
+                      onChange={(e) => handleTitleChange(e, globalIndex)}
+                    />
+                    <input
+                      type="date"
+                      value={event.startDate.toISOString().split("T")[0]}
+                      onChange={(e) => handleDateChange(e, globalIndex)}
+                    />
                     <textarea
                       value={event.content}
                       onChange={(e) => handleContentChange(e, globalIndex)}
@@ -331,10 +387,14 @@ const Modal = ({ addClassToList, closeModal }) => {
           })}
         </div>
         <div className="modal-footer">
-          <button className="button continue-button" onClick={() => setReviewStep(reviewStep + 1)}>
+          <button
+            className="button continue-button"
+            onClick={() => setReviewStep(reviewStep + 1)}
+          >
             Continue
           </button>
         </div>
+        
       </>
     );
   };
@@ -343,7 +403,11 @@ const Modal = ({ addClassToList, closeModal }) => {
     <div className="modal open">
       <div className="modal-overlay"></div>
       <div className="modal-container">
-        {isLoading && <div className="loading-overlay"><div className="spinner"></div></div>}
+        {isLoading && (
+          <div className="loading-overlay">
+            <div className="spinner"></div>
+          </div>
+        )}
         <div className={`form ${isLoading ? "blurred" : ""}`}>
           {reviewStep === 0 && (
             <>
@@ -373,7 +437,10 @@ const Modal = ({ addClassToList, closeModal }) => {
                         </div>
                       </div>
                     ))}
-                    <button className="button" onClick={submitAdditionalQuestions}>
+                    <button
+                      className="button"
+                      onClick={submitAdditionalQuestions}
+                    >
                       Submit
                     </button>
                   </>

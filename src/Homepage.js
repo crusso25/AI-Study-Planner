@@ -253,6 +253,7 @@ const Homepage = () => {
             setClassModalOpen(false);
           }}
           calendarEvents={calendarEvents}
+          fetchEvents={fetchEvents}
         />
       )}
     </div>
