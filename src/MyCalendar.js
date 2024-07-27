@@ -287,7 +287,7 @@ const MyCalendar = () => {
     for (let session of studySessions) {
       const specificMessage = {
         role: "user",
-        content: `The class is ${examEvent.className}, and this is the content for the study session titled "${session.title}": ${session.content}. Please provide detailed information and key concepts needed to master this content in the following JSON format. Nothing other than these exact formats should be given in the response, it must be exactly as stated in the format given: 
+        content: `The class is ${examEvent.className}, and this is the content for the study session titled "${session.title}": ${session.content}. Please provide detailed information and key concepts needed to master this content in the following JSON format. Nothing other than these exact formats should be given in the response, it must be exactly as stated in the format given (if any math notation needs to be used, use LaTeX format): 
         {
           "additionalContent": "Detailed information and key concepts to master this session's content that you generate in your response"
         }`,

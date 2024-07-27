@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext } from "react";
 import "./EventModal.css";
 import { AccountContext } from "../Account";
-import Latex from 'react-latex-next'; // Import react-latex-next
+import Latex from "react-latex-next";
 
-const EventModal = ({ event, closeModal, updateEventContent, addStudySessions }) => {
+const EventModal = ({ event, closeModal, updateEventContent, addStudySessions, backToClassModal }) => {
   const { getSession } = useContext(AccountContext);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -32,9 +32,9 @@ const EventModal = ({ event, closeModal, updateEventContent, addStudySessions })
     setIsEditing(true);
   };
 
-  const handleDoneClick = () => {
+  const handleDoneClick = async () => {
     setIsEditing(false);
-    updateEventContent(event, content);
+    await updateEventContent(event, content);
   };
 
   const handleContentChange = (e) => {
@@ -42,7 +42,7 @@ const EventModal = ({ event, closeModal, updateEventContent, addStudySessions })
   };
 
   const getClassContent = async () => {
-    setIsLoading(true); // Show loading spinner
+    setIsLoading(true);
     const idToken = sessionData.getIdToken().getJwtToken();
     const userId = sessionData.getIdToken().payload.sub;
     try {
@@ -72,18 +72,10 @@ const EventModal = ({ event, closeModal, updateEventContent, addStudySessions })
   };
 
   const formatContent = (content) => {
-    // Replace **bold** with <b>bold</b> and add a new line before the bold text
-    let formattedContent = content.replace(/\*\*(.*?)\*\*/g, '<br/><b>$1</b>');
-
-    // Handle numbered list
-    formattedContent = formattedContent.replace(/(\d+\.)/g, '<br/>$1');
-
-    // Handle dashes for lists
-    formattedContent = formattedContent.replace(/-\s/g, '<br/>- ');
-
-    // Handle new lines for consistency
-    formattedContent = formattedContent.replace(/\n/g, '<br/>');
-
+    let formattedContent = content.replace(/\*\*(.*?)\*\*/g, "<br/><b>$1</b>");
+    formattedContent = formattedContent.replace(/(\d+\.)/g, "<br/>$1");
+    formattedContent = formattedContent.replace(/-\s/g, "<br/>- ");
+    formattedContent = formattedContent.replace(/\n/g, "<br/>");
     return formattedContent;
   };
 
@@ -96,19 +88,32 @@ const EventModal = ({ event, closeModal, updateEventContent, addStudySessions })
             <h2>{event.title}</h2>
             <p className="class-name">{event.className}</p>
           </div>
-          <div className="close-icon toggleButton" onClick={closeModal}>
-            &times;
+          <div
+            className={`close-icon toggleButton ${backToClassModal ? "small-back-button" : ""}`}
+            onClick={backToClassModal ? backToClassModal : closeModal}
+          >
+            {backToClassModal ? "Back" : "×"}
           </div>
         </div>
         <div className="modal-content">
           {isGenerating ? (
             <>
-              <p>Before making a study schedule for this exam, please confirm that we have all content covered on this exam.</p>
-              <h3><strong>Current Exam Content:</strong></h3>
+              <p>
+                Before making a study schedule for this exam, please confirm
+                that we have all content covered on this exam.
+              </p>
+              <h3>
+                <strong>Current Exam Content:</strong>
+              </h3>
               {isEditing ? (
                 <>
                   <textarea value={content} onChange={handleContentChange} />
-                  <button className="button done-button" onClick={handleDoneClick}>Done</button>
+                  <button
+                    className="button done-button"
+                    onClick={handleDoneClick}
+                  >
+                    Done
+                  </button>
                 </>
               ) : (
                 <Latex>{formatContent(content)}</Latex>
@@ -116,31 +121,51 @@ const EventModal = ({ event, closeModal, updateEventContent, addStudySessions })
             </>
           ) : (
             <>
-              <p><strong>Type:</strong> {event.type}</p>
-              <p><strong>Content:</strong> <Latex>{formatContent(event.content)}</Latex></p>
+              <p>
+                <strong>Type:</strong> {event.type}
+              </p>
+              <p>
+                <strong>Content:</strong> <Latex>{formatContent(event.content)}</Latex>
+              </p>
+              {isEditing ? (
+                <>
+                  <textarea value={content} onChange={handleContentChange} />
+                  <button
+                    className="button done-button"
+                    onClick={handleDoneClick}
+                  >
+                    Done
+                  </button>
+                </>
+              ) : null}
             </>
           )}
         </div>
         <div className="modal-footer">
           {isLoading ? (
-            <div className="loading-overlay"><div className="spinner"></div></div>
-          ) : isGenerating ? (
+            <div className="loading-overlay">
+              <div className="spinner"></div>
+            </div>
+          ) : (
             <>
               {isEditing ? null : (
                 <button className="button edit-button" onClick={handleEditClick}>
                   Edit Content
                 </button>
               )}
-              <button className="button continue-button" onClick={getClassContent}>
-                Continue
-              </button>
+              {isGenerating && !isEditing ? (
+                <button
+                  className="button continue-button"
+                  onClick={getClassContent}
+                >
+                  Continue
+                </button>
+              ) : event.type === "Exam" ? (
+                <button className="button generate-button" onClick={handleGenerateClick}>
+                  Generate Study Plan
+                </button>
+              ) : null}
             </>
-          ) : (
-            event.type === "Exam" && (
-              <button className="button generate-button" onClick={handleGenerateClick}>
-                Generate Study Plan
-              </button>
-            )
           )}
         </div>
       </div>

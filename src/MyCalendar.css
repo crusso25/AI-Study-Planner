@@ -49,7 +49,7 @@
   height: 20px;
   display: inline-block;
   margin-right: 10px;
-  border-radius: 3px;
+  border-radius: 20px;
 }
 
 .toggle-sidebar-button {
@@ -71,11 +71,10 @@
   background-color: #0056b3;
 }
 .filter-list {
-  margin-top: 20px;
+  margin-top: 10px;
 }
 
 .filter-list li {
   display: flex;
   align-items: center;
-  margin-bottom: 5px;
 }

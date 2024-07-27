@@ -70,10 +70,10 @@ header {
     background-color: #cc0000;
 }
 .settings-item {
-    font-size: 0.9em; /* Smaller text for settings */
+    font-size: 0.9em;
     border-bottom: 1px solid #ccc;
 }
 
 .settings-item:hover {
-    background-color: transparent; /* No highlight on hover */
+    background-color: transparent;
 }
