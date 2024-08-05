@@ -1,0 +1,82 @@
+.modal-tabs {
+  display: flex;
+  justify-content: space-around;
+}
+
+.modal-tabs button {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  color: #007bff;
+  transition: color 0.3s ease;
+}
+
+.modal-tabs button.active {
+  color: #0056b3;
+  border-bottom: 2px solid #0056b3;
+}
+
+.modal-content {
+  border-top: 0px;
+}
+
+.delete-class {
+  background-color: #ff4d4d;
+  box-shadow: #ff4d4d 0 10px 20px -10px;
+  border: 1px solid #ff4d4d;
+}
+
+.delete-class:hover {
+  background-color: #cc0000;
+}
+
+.class-summary-container {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.event-type-container {
+  width: 50%;
+  display: flex;
+}
+
+.edit-button {
+  background-color: #ffc107;
+  border-color: #e0a800;
+  box-shadow: #ffc107 0 10px 20px -10px;
+}
+
+.edit-button:hover {
+  background-color: #e0a800;
+}
+
+.event-list {
+  width: 100%;
+}
+
+.clickable {
+  margin: 7px 0 7px 0;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.clickable:hover {
+  background-color: #e6e6e6;
+}
+
+.event-list-header {
+  width: 100%;
+  display: flex;
+}
+
+.class-summary-container .event-type-container .btn-sm {
+  font-size: 0.9rem;
+  padding: 0.25rem 0.5rem;
+  margin-left: 10px;
+}

@@ -4,14 +4,6 @@
     box-sizing: border-box;
 }
 
-.container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-
-
 .modal {
     position: fixed;
     inset: 0;
@@ -75,6 +67,11 @@
     flex-direction: column;
 }
 
+.form.blurred {
+    filter: blur(5px);
+    pointer-events: none;
+}
+
 .modal-header,
 .modal-footer {
     flex: 0 0 10%;
@@ -107,7 +104,7 @@
     height: 8px;
     background-color: #fff;
 }
-  
+
 .modal-content::-webkit-scrollbar-thumb {
     background-color: rgba(37, 37, 37, 0.788);
 }
@@ -142,18 +139,20 @@
     transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.input:focus, .input:valid {
+.input:focus,
+.input:valid {
     outline: none;
 }
 
-.input:focus ~ .label, .input:valid ~ .label {
+.input:focus~.label,
+.input:valid~.label {
     transform: translateX(-10px) translateY(-50%) scale(0.8);
     background-color: #fff;
     padding: 0.2em;
 }
 
 .button {
-    background-color: #5E5DF0;
+    background-color: #5e5df0;
     color: #fff;
     outline: none;
     border: 1px solid #4c4cd1;
@@ -161,10 +160,67 @@
     border-radius: 20px;
     cursor: pointer;
     margin-left: 10px;
-    box-shadow: #5E5DF0 0 10px 20px -10px;
+    box-shadow: #5e5df0 0 10px 20px -10px;
     transition: all 0.3s ease;
 }
 
 .button:hover {
     background-color: #4c4cd1;
 }
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+.spinner {
+    border: 16px solid #f3f3f3;
+    border-top: 16px solid #3498db;
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+.event-review {
+    margin-bottom: 20px;
+  }
+  
+  .event-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .event-date {
+    font-size: 0.9em;
+    color: #888;
+    margin-bottom: 10px;
+  }
+  
+  textarea {
+    width: 100%;
+    height: 60px;
+  }
+  
+  .done-button {
+    margin-top: 10px;
+  }
+  

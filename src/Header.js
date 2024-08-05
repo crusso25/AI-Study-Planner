@@ -1,12 +1,19 @@
+import React, { useState, useContext, useEffect } from "react";
 import { Outlet, Link } from "react-router-dom";
-import "./Header.css";
-import React, { useState, useContext } from "react";
 import { AccountContext } from "./Account";
-import "./popUps/modal.css";
+import "./Header.css";
 
 const Header = () => {
   const [userPopUp, setUserPopUp] = useState(false);
-  const { logout } = useContext(AccountContext);
+  const { logout, sessionData } = useContext(AccountContext);
+  const [initial, setInitial] = useState("U");
+
+  useEffect(() => {
+    if (sessionData) {
+      const username = sessionData.getIdToken().payload['cognito:username'];
+      setInitial(username.charAt(0).toUpperCase());
+    }
+  }, [sessionData]);
 
   return (
     <>
@@ -27,13 +34,16 @@ const Header = () => {
                 setUserPopUp(!userPopUp);
               }}
             >
-              U
+              {initial}
             </div>
           </nav>
         </h2>
         {userPopUp && (
           <div id="user-pop-up">
-            <button id="login-button" className="button" onClick={logout}>
+            <Link to="/settings" className="dropdown-item settings-item">
+              Settings
+            </Link>
+            <button id="logout-button" onClick={logout}>
               Logout
             </button>
           </div>
