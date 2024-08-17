@@ -1,13 +1,14 @@
 .my-calendar-container {
   display: flex;
   position: relative;
-  height: 90vh;
+  height: 100vh;
 }
 
 .calendar {
   flex-grow: 1;
   transition: width 0.3s, margin-right 0.3s;
   max-width: 90%;
+  margin: 20px 10px 0 10px;
 }
 
 .with-sidebar {
@@ -15,9 +16,8 @@
 }
 
 .class-list {
-  width: 400px;
+  width: 300px;
   padding: 20px;
-  background-color: #f9f9f9;
   border-left: 1px solid #ddd;
   height: 100%;
   overflow-y: auto;
@@ -50,6 +50,7 @@
   display: inline-block;
   margin-right: 10px;
   border-radius: 20px;
+  min-width: 20px;
 }
 
 .toggle-sidebar-button {

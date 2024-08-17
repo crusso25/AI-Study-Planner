@@ -2,10 +2,11 @@ import React, { useState, useEffect, useContext } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import openai from "./openai";
-import { AccountContext } from "./Account";
-import EventModal from "./popUps/EventModal.js";
+import openai from "../openai.js";
+import { AccountContext } from "../User/Account.js";
+import EventModal from "../Modals/EventModal.js";
 import "./MyCalendar.css";
+import Header from "./Header.js";
 
 const localizer = momentLocalizer(moment);
 
@@ -24,23 +25,23 @@ const MyCalendar = () => {
     {
       role: "system",
       content:
-        "You will be given the content that is covered for a certain specified class, along with the content that is covered for an exam in that class. Make a list of study sessions that start at a Feb 1 2023, until the date of the exam, which will be given to you. Make sure that the study sessions cover all specific material that will be tested on the exam. Give your response in this exact format (JSON format). Nothing other than these exact formats should be given in the response, it must be exactly as stated in the formats given." +
+        "You will be given the content that is covered for a certain specified class, along with the content that is covered for an exam in that class. Make a list of study sessions that start at a Feb 1 2023, until the date of the exam, which will be given to you. Make sure that the study sessions cover all topics / material that will be tested on the exam. Give your response in this exact format (JSON format). For your first response, nothing other than these exact formats should be given in the response, it must be exactly as stated in the formats given." +
         `[{
           "week": "Week X",
           "sessions": [
             {
-              "title": "Exam (1/2/3...) Study Session A",
+              "title": "Study: {Specific topic this study session covers}",
               "date": "YYYY-MM-DD",
               "startTime": "HH:MM",
               "endTime": "HH:MM",
-              "content": "Content to study"
+              "content": "{Topic}"
             },
             {
-              "title": "Exam (1/2/3...) Study Session B",
+              "title": "Study: {Specific topic this study session covers}",
               "date": "YYYY-MM-DD",
               "startTime": "HH:MM",
               "endTime": "HH:MM",
-              "content": "Content to study"
+              "content": "{Topic}"
             }
             ...
           ]
@@ -85,36 +86,42 @@ const MyCalendar = () => {
   }, [calendarEvents, selectedTypes]);
 
   const fetchEvents = async (userSession) => {
-    const idToken = userSession.getIdToken().getJwtToken();
-    const userId = userSession.getIdToken().payload.sub;
+    const accessToken = userSession.accessToken;
+    const userId = userSession.userId;
     try {
       const response = await fetch(
-        "https://yloqq6vtu4.execute-api.us-east-2.amazonaws.com/test/fetchCalendarEvents",
+        `http://localhost:8080/api/users/${userId}/calendarevents`,
         {
-          method: "POST",
+          method: "GET",
           headers: {
-            Authorization: idToken,
+            Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ userId: userId }),
         }
       );
       const data = await response.json();
       if (response.ok) {
         console.log("Response from API:", data);
-        const userEvents = data.Items.map((item) => ({
-          title: item.title,
-          start: new Date(item.startDate),
-          end: new Date(item.endDate),
+        const userEvents = data.content.map((item) => ({
+          title:
+            item.type === "Study Session"
+              ? item.content.split("\n")[0]
+              : item.title,
+          startDate: new Date(item.startDate),
+          endDate: new Date(item.endDate),
           content: item.content,
           className: item.className,
           type: item.type,
           color: getClassColor(item.className),
+          id: item.id,
+          contentGenerated: item.contentGenerated,
+          practiceProblems: item.practiceProblems,
+          examFor: item.examFor,
         }));
         setCalendarEvents(userEvents);
-        const classSet = new Set(data.Items.map((item) => item.className));
+        const classSet = new Set(data.content.map((item) => item.className));
         setClasses([...classSet]);
-        const typeSet = new Set(data.Items.map((item) => item.type));
+        const typeSet = new Set(data.content.map((item) => item.type));
         setEventTypes([...typeSet]);
         setSelectedTypes(new Set([...typeSet]));
       } else {
@@ -134,12 +141,12 @@ const MyCalendar = () => {
       (event) => event.className === className
     );
     if (classEvents.length > 0) {
-      setViewDate(classEvents[0].start);
+      setViewDate(classEvents[0].startDate);
     }
   };
 
   const eventStyleGetter = (event) => {
-    const backgroundColor = event.color;
+    const backgroundColor = getClassColor(event.className);
     const style = {
       backgroundColor,
       borderRadius: "0px",
@@ -170,43 +177,70 @@ const MyCalendar = () => {
     setFilteredEvents(filtered);
   };
 
-  const editUserEvent = async (event, newContent) => {
-    const idToken = sessionData.getIdToken().getJwtToken();
-    const userId = sessionData.getIdToken().payload.sub;
+  const editUserEvent = async (
+    event,
+    newContent,
+    newContentGenerated,
+    practiceProblems
+  ) => {
+    const accessToken = sessionData.accessToken;
+    const userId = sessionData.userId;
+    const updatedContent = newContent !== null ? newContent : event.content;
+    const updatedContentGenerated =
+      newContentGenerated !== null
+        ? newContentGenerated
+        : event.contentGenerated;
+    const updatedPracticeProblems =
+      practiceProblems !== null ? practiceProblems : event.practiceProblems;
+
     try {
       const response = await fetch(
-        "https://yloqq6vtu4.execute-api.us-east-2.amazonaws.com/test/editUserEvent",
+        `http://localhost:8080/api/users/${userId}/calendarevents/${event.id}`,
         {
-          method: "POST",
+          method: "PUT",
           headers: {
-            Authorization: idToken,
+            Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            userId: userId,
+            className: event.className,
+            endDate: event.endDate,
+            startDate: event.startDate,
+            id: event.id,
             title: event.title,
-            content: newContent,
+            type: event.type,
+            content: updatedContent,
+            contentGenerated: updatedContentGenerated,
+            practiceProblems: updatedPracticeProblems,
           }),
         }
       );
       const data = await response.json();
       if (response.ok) {
         console.log("Response from API:", data);
+        const updatedEvents = calendarEvents.map((e) =>
+          e === event
+            ? {
+                ...e,
+                content: updatedContent,
+                contentGenerated: updatedContentGenerated,
+                practiceProblems: updatedPracticeProblems,
+              }
+            : e
+        );
+        setCalendarEvents(updatedEvents);
+        setSelectedEvent({
+          ...event,
+          content: updatedContent,
+          contentGenerated: updatedContentGenerated,
+          practiceProblems: updatedPracticeProblems,
+        });
       } else {
         console.error("Failed to Edit Event:", data.error);
       }
     } catch (err) {
       console.error("Error Editing Event:", err);
     }
-  };
-
-  const updateEventContent = async (event, newContent) => {
-    await editUserEvent(event, newContent);
-    const updatedEvents = calendarEvents.map((e) =>
-      e === event ? { ...e, content: newContent } : e
-    );
-    setCalendarEvents(updatedEvents);
-    setSelectedEvent({ ...event, content: newContent });
   };
 
   const parseCalendarResponse = async (response, className) => {
@@ -230,25 +264,26 @@ const MyCalendar = () => {
 
   const addCalendarEvent = async (calendarEvent) => {
     if (sessionData) {
-      const idToken = sessionData.getIdToken().getJwtToken();
-      const userId = sessionData.getIdToken().payload.sub;
+      const accessToken = sessionData.accessToken;
+      const userId = sessionData.userId;
       try {
         const response = await fetch(
-          "https://yloqq6vtu4.execute-api.us-east-2.amazonaws.com/test/addCalendarEvents/",
+          `http://localhost:8080/api/users/${userId}/calendarevents`,
           {
             method: "POST",
             headers: {
-              Authorization: idToken,
+              Authorization: `Bearer ${accessToken}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              userId: userId,
               title: calendarEvent.title,
               startDate: calendarEvent.startDate,
               endDate: calendarEvent.endDate,
               content: calendarEvent.content,
               className: calendarEvent.className,
               type: calendarEvent.type,
+              contentGenerated: false,
+              examFor: calendarEvent.examFor,
             }),
           }
         );
@@ -256,71 +291,99 @@ const MyCalendar = () => {
         if (response.ok) {
           console.log("Response from API:", data);
         } else {
-          console.error("Failed to add class:", data.error);
+          console.error("Failed to add event:", data.error);
         }
       } catch (err) {
-        console.error("Error adding class:", err);
+        console.error("Error adding event:", err);
       }
     } else {
       console.error("User is not authenticated");
     }
   };
 
-  const addStudySessions = async (classContent, examEvent) => {
-    const initialMessage = {
-      role: "user",
-      content: `The class is ${examEvent.className}, the date of this exam is ${examEvent.startDate}. This is the content that is covered on this exam: ${examEvent.content}. This is the content for the entire class: ${classContent}`,
-    };
-    const updatedChatMessages = [...chatMessages, initialMessage];
-    updateChat(updatedChatMessages);
+  const deleteCalendarEvent = async (event) => {
+    const accessToken = sessionData.accessToken;
+    const userId = sessionData.userId;
 
-    const initialResponse = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: updatedChatMessages,
-    });
-
-    const studySessions = await parseCalendarResponse(
-      initialResponse.choices[0].message.content,
-      examEvent.className
-    );
-
-    for (let session of studySessions) {
-      const specificMessage = {
-        role: "user",
-        content: `The class is ${examEvent.className}, and this is the content for the study session titled "${session.title}": ${session.content}. Please provide detailed information and key concepts needed to master this content in the following JSON format. Nothing other than these exact formats should be given in the response, it must be exactly as stated in the format given (if any math notation needs to be used, use LaTeX format): 
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/users/${userId}/calendarevents/${event.id}`,
         {
-          "additionalContent": "Detailed information and key concepts to master this session's content that you generate in your response"
-        }`,
-      };
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      const specificChatMessages = [...updatedChatMessages, specificMessage];
-      const specificResponse = await openai.chat.completions.create({
+      if (response.ok) {
+        console.log(`Deleted event with ID: ${event.id}`);
+      } else {
+        const data = await response.json();
+        console.error(
+          `Failed to delete event with ID: ${event.id}`,
+          data.error
+        );
+      }
+    } catch (err) {
+      console.error(`Error deleting event with ID: ${event.id}`, err);
+    }
+  };
+
+  const addStudySessions = async (
+    classContent,
+    examEvent,
+    lectureEvents
+  ) => {
+    let studySessions = lectureEvents;
+    if (lectureEvents.length === 0) {
+      const initialMessage = {
+        role: "user",
+        content: `The class is ${examEvent.className}, the date of this exam is ${examEvent.startDate}. This is the content that is covered on this exam: ${examEvent.content}. This is the content for the entire class: ${classContent}`,
+      };
+      let updatedChatMessages = [...chatMessages, initialMessage];
+      updateChat(updatedChatMessages);
+
+      const initialResponse = await openai.chat.completions.create({
         model: "gpt-4o",
-        messages: specificChatMessages,
+        messages: updatedChatMessages,
       });
 
-      let specificContent;
-      try {
-        let cleanedResponse = specificResponse.choices[0].message.content
-          .replace(/```json|```/g, "")
-          .trim();
-      
-        
-        const additionalContentMatch = cleanedResponse.match(/"additionalContent"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-      
-        if (additionalContentMatch && additionalContentMatch[1]) {
-          specificContent = additionalContentMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
-        } else {
-          console.error("Error extracting additional content.");
-          specificContent = "Error extracting additional content.";
-        }
-      } catch (error) {
-        console.error("Error processing response:", error);
-        specificContent = "Error processing additional content.";
-      }
-      
+      studySessions = await parseCalendarResponse(
+        initialResponse.choices[0].message.content,
+        examEvent.className
+      );
+    }
+    const updatedPrompt = [
+      {
+        role: "system",
+        content: `You will be given a course, along with a specific topic covered in that course. Make a study guide containing detailed information and key concepts needed to master this content. 
+        Your study guide should only cover the content relevant to the topic that you are prompted. Do not include practice problems or questions in the additionalContent.
+        Do not include anything else in your response other than the study guide. (I.E. Don't include an intro or outro to your response saying "Here is a detailed study guide ..." or anything along those lines. Keep the study guide clean.)`,
+      },
+      {
+        role: "user",
+        content: `The course is ${examEvent.className}, and the content covered on the entire exam is ${examEvent.content}.`,
+      },
+    ];
 
+    console.log(studySessions);
+    for (let session of studySessions) {
+      const specificChatMessage = {
+        role: "user",
+        content: `This is the topic to make study guide on: ${session.content}.`,
+      };
+      const specificMessageInput = [...updatedPrompt, specificChatMessage];
+
+      const specificResponse = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: specificMessageInput,
+      });
+      const specificContent = specificResponse.choices[0].message.content;
+      session.type = "Study Session";
       session.content += `\n\nDetailed Content:\n${specificContent}`;
+      session.examFor = examEvent.title + ", " + examEvent.className;
       await addCalendarEvent(session);
     }
 
@@ -340,14 +403,15 @@ const MyCalendar = () => {
   };
 
   return (
-    <div className="my-calendar-container">
+    <div className="main-container">
+      <Header />
       <div className={`calendar ${isSidebarVisible ? "with-sidebar" : ""}`}>
         <Calendar
           localizer={localizer}
           events={filteredEvents}
-          startAccessor="start"
-          endAccessor="end"
-          style={{ height: "940px", width: "100%" }}
+          startAccessor="startDate"
+          endAccessor="endDate"
+          style={{ height: "1200px", width: "100%" }}
           onSelectEvent={handleEventClick}
           defaultView="month"
           date={viewDate}
@@ -357,6 +421,8 @@ const MyCalendar = () => {
       </div>
       {isSidebarVisible && (
         <div className="class-list">
+          <br />
+          <br />
           <h3>Classes</h3>
           <ul>
             {classes.map((className, index) => (
@@ -365,10 +431,10 @@ const MyCalendar = () => {
                 key={index}
                 onClick={() => handleClassClick(className)}
               >
-                <span
+                <div
                   className="class-color-box"
                   style={{ backgroundColor: getClassColor(className) }}
-                ></span>
+                ></div>
                 {className}
               </li>
             ))}
@@ -400,8 +466,40 @@ const MyCalendar = () => {
         <EventModal
           event={selectedEvent}
           closeModal={() => setSelectedEvent(null)}
-          updateEventContent={updateEventContent}
-          addStudySessions={addStudySessions}
+          updateEvent={(
+            event,
+            newContent,
+            contentGenerated,
+            practiceProblems
+          ) => {
+            editUserEvent(
+              event,
+              newContent,
+              contentGenerated,
+              practiceProblems
+            );
+          }}
+          addStudySessions={async (classContent, event, lectureEvents) => {
+            await addStudySessions(classContent, event, lectureEvents);
+            fetchEvents(sessionData);
+            setSelectedEvent(null);
+          }}
+          deleteEvent={async (event) => {
+            if (event.type === "Exam" && event.contentGenerated) {
+              for (const calendarEvent of calendarEvents) {
+                if (
+                  calendarEvent.examFor ===
+                  event.title + ", " + event.className
+                ) {
+                  await deleteCalendarEvent(calendarEvent);
+                }
+              }
+            }
+            await deleteCalendarEvent(event);
+            fetchEvents(sessionData);
+            setSelectedEvent(null);
+          }}
+          calendarEvents={calendarEvents}
         />
       )}
     </div>

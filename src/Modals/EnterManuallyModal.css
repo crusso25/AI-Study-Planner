@@ -1,0 +1,22 @@
+
+  
+  .event-type-container {
+    margin-bottom: 20px;
+  }
+  
+  .no-bullet {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  .flashing-border {
+    border: 2px dashed #ff9800;
+    animation: flash 1s infinite;
+  }
+  
+  @keyframes flash {
+    0% { border-color: #ff9800; }
+    50% { border-color: #ffc107; }
+    100% { border-color: #ff9800; }
+  }
+  

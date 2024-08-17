@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import "./AddEventModal.css";
-import { AccountContext } from "../Account";
+import { AccountContext } from "../User/Account";
 
 const AddEventModal = ({
   className,

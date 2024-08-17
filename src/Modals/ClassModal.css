@@ -1,34 +1,16 @@
-.modal-tabs {
-  display: flex;
-  justify-content: space-around;
-}
 
-.modal-tabs button {
-  padding: 10px 20px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
-  color: #007bff;
-  transition: color 0.3s ease;
-}
-
-.modal-tabs button.active {
-  color: #0056b3;
-  border-bottom: 2px solid #0056b3;
-}
 
 .modal-content {
   border-top: 0px;
 }
 
-.delete-class {
+.delete-button {
   background-color: #ff4d4d;
   box-shadow: #ff4d4d 0 10px 20px -10px;
   border: 1px solid #ff4d4d;
 }
 
-.delete-class:hover {
+.delete-button:hover {
   background-color: #cc0000;
 }
 
@@ -73,6 +55,8 @@
 .event-list-header {
   width: 100%;
   display: flex;
+  justify-content: start;
+  align-items: center;
 }
 
 .class-summary-container .event-type-container .btn-sm {
