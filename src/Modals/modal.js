@@ -12,10 +12,10 @@ const Modal = ({ addClassToList, closeModal }) => {
   const [className, setClassName] = useState("");
   const [startDate, setStartDate] = useState("");
   const [assignmentTypes, setAssignmentTypes] = useState([
-    { name: "Exam", checked: true },
-    { name: "Lecture", checked: true },
-    { name: "Homework", checked: true },
-    { name: "Project", checked: true },
+    { name: "Exam", checked: true, required: true },
+    { name: "Lecture", checked: true, required: true },
+    { name: "Homework", checked: false, required: false },
+    { name: "Project", checked: false, required: false },
   ]);
   const [newAssignmentType, setNewAssignmentType] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -32,6 +32,7 @@ const Modal = ({ addClassToList, closeModal }) => {
   const [isManualEntry, setIsManualEntry] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [formattedFileContent, setFormattedFileContent] = useState("");
+  const [checkWarning, setCheckWarning] = useState(false);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -63,7 +64,7 @@ const Modal = ({ addClassToList, closeModal }) => {
       const userId = sessionData.userId;
       try {
         const response = await fetch(
-          `http://localhost:8080/api/users/${userId}/calendarevents`,
+          `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/calendarevents`,
           {
             method: "POST",
             headers: {
@@ -260,6 +261,14 @@ const Modal = ({ addClassToList, closeModal }) => {
 
   const handleCheckboxChange = (index) => {
     const updatedAssignmentTypes = [...assignmentTypes];
+    const type = updatedAssignmentTypes[index];
+
+    if (type.required) {
+      setCheckWarning(true);
+      return;
+    }
+    setCheckWarning(false);
+
     updatedAssignmentTypes[index].checked =
       !updatedAssignmentTypes[index].checked;
     setAssignmentTypes(updatedAssignmentTypes);
@@ -269,7 +278,7 @@ const Modal = ({ addClassToList, closeModal }) => {
     if (newAssignmentType.trim()) {
       setAssignmentTypes([
         ...assignmentTypes,
-        { name: newAssignmentType, checked: true },
+        { name: newAssignmentType, checked: true, required: false },
       ]);
       setNewAssignmentType("");
     }
@@ -278,100 +287,94 @@ const Modal = ({ addClassToList, closeModal }) => {
   const renderInitialStep = () => (
     <>
       <div className="modal-header">
-        <h2>Enter Class Details</h2>
+        <h2>Enter Course Details</h2>
         <div className="close-icon toggleButton" onClick={closeModal}>
           &times;
         </div>
       </div>
       <div className="modal-content">
-        <div className="input-group">
-          <input
-            className="input"
-            type="text"
-            value={className}
-            onChange={(e) => setClassName(e.target.value)}
-            required
-          />
-          <label className="label">Name of Class</label>
-        </div>
-        <div className="input-group">
-          <h5>Start date</h5>
-          <input
-            className="input"
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            required
-          />
-        </div>
-        <div className="assignment-types">
-          <h5>Edit Class's Type of Events</h5>
-          {assignmentTypes.map((type, index) => (
-            <div key={index} className="checkbox-group">
+        <div className="d-flex flex-row">
+          <div
+            className="d-flex flex-column justify-content-center"
+            style={{ width: "50%" }}
+          >
+            <div className="input-group">
               <input
-                type="checkbox"
-                checked={type.checked}
-                onChange={() => handleCheckboxChange(index)}
+                className="input"
+                type="text"
+                value={className}
+                onChange={(e) => setClassName(e.target.value)}
+                required
               />
-              <label>{type.name}</label>
+              <label className="label">Name of Class</label>
             </div>
-          ))}
-          <div className="input-group new-assignment-type">
-            <input
-              type="text"
-              value={newAssignmentType}
-              onChange={(e) => setNewAssignmentType(e.target.value)}
-              placeholder="Add new type"
-            />
+            <div className="input-group">
+              <h5>Start date: </h5>
+              <input
+                className="input"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          <div className="assignment-types">
+            <h5>Course Event Types</h5>
+            {checkWarning && (
+              <p>You must have Exam and Lecture Topics event types</p>
+            )}
+            {assignmentTypes.map((type, index) => (
+              <div key={index} className="checkbox-group">
+                <input
+                  type="checkbox"
+                  checked={type.checked}
+                  onChange={() => handleCheckboxChange(index)}
+                />
+                <label>{type.name}</label>
+              </div>
+            ))}
+            <div className="input-group new-assignment-type">
+              <input
+                type="text"
+                value={newAssignmentType}
+                onChange={(e) => setNewAssignmentType(e.target.value)}
+                placeholder="Add new type"
+              />
+              <button
+                onClick={handleAddAssignmentType}
+                className="button add-button"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="d-flex flex-column align-items-center justify-content-center" style={{ height:"100%", marginBottom:"140px" }}>
+          <h3>How will you enter course information?</h3>
+          <br/>
+          <div className="d-flex justify-content-center align-items-center">
             <button
-              onClick={handleAddAssignmentType}
-              className="button add-button"
+              className="button"
+              onClick={() => {
+                setCurrentStep(2);
+                setIsManualEntry(false);
+              }}
             >
-              +
+              Upload Syllabus
+            </button>
+            <h5>or</h5>
+            <button
+              className="button"
+              onClick={() => {
+                setIsManualEntry(true);
+                setCurrentStep(2);
+              }}
+            >
+              Enter Manually
             </button>
           </div>
         </div>
-      </div>
-      <div className="modal-footer">
-        <button
-          className="button"
-          onClick={() => {
-            setCurrentStep(1);
-          }}
-        >
-          Next
-        </button>
-      </div>
-    </>
-  );
-
-  const renderUploadOptions = () => (
-    <>
-      <div className="modal-header">
-        <h2>How do you want to enter the schedule?</h2>
-        <div className="close-icon toggleButton" onClick={closeModal}>
-          &times;
-        </div>
-      </div>
-      <div className="modal-content">
-        <button
-          className="button"
-          onClick={() => {
-            setCurrentStep(2);
-            setIsManualEntry(false);
-          }}
-        >
-          Upload Syllabus
-        </button>
-        <button
-          className="button"
-          onClick={() => {
-            setIsManualEntry(true);
-            setCurrentStep(2);
-          }}
-        >
-          Enter Manually
-        </button>
       </div>
     </>
   );
@@ -388,13 +391,12 @@ const Modal = ({ addClassToList, closeModal }) => {
         )}
         <div className={`form ${isLoading ? "blurred" : ""}`}>
           {currentStep === 0 && renderInitialStep()}
-          {currentStep === 1 && renderUploadOptions()}
           {currentStep === 2 && !isManualEntry && (
             <>
               <div className="modal-header">
                 <h2>Upload Syllabus</h2>
-                <div className="close-icon toggleButton" onClick={closeModal}>
-                  &times;
+                <div className="small-back-button" onClick={() => {setCurrentStep(0)}}>
+                  Back
                 </div>
               </div>
               <div className="modal-content">
@@ -412,16 +414,14 @@ const Modal = ({ addClassToList, closeModal }) => {
           )}
           {currentStep === 2 && isManualEntry && (
             <EnterManuallyModal
-              closeModal={async (updatedCalendarEvents) => {
-                await submitEvents(updatedCalendarEvents);
-                closeModal();
-              }}
+              closeModal={() => {setCurrentStep(0)}}
               addEvent={(event) => {
                 setCalendarEvents([...calendarEvents, event]);
               }}
               className={className}
               calendarEvents={calendarEvents}
               assignmentTypes={assignmentTypes}
+              uploadEvents={async (updatedCalendarEvents) => {submitEvents(updatedCalendarEvents)}}
             />
           )}
           {currentStep === 3 && (
@@ -447,6 +447,7 @@ const Modal = ({ addClassToList, closeModal }) => {
                 );
                 setCalendarEvents(updatedEvents);
               }}
+              uploadEvents={async (updatedCalendarEvents) => {submitEvents(updatedCalendarEvents)}}
             />
           )}
         </div>

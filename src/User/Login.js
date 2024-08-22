@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { AccountContext } from './Account';
 
 const Login = () => {
-    const [username, setUsername] = useState('');
+    const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const { authenticate } = useContext(AccountContext);
     const [error, setError] = useState('');
@@ -10,7 +10,7 @@ const Login = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            await authenticate(username, password);
+            await authenticate(identifier, password);
         } catch (error) {
             setError('Login failed');
         }
@@ -22,8 +22,8 @@ const Login = () => {
                 <label>Username:</label>
                 <input
                     type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
                 />
             </div>
             <div>

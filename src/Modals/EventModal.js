@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { AccountContext } from "../User/Account";
 import Latex from "react-latex-next";
 import "./EventModal.css";
@@ -36,6 +37,10 @@ const EventModal = ({
   const [showLecturePrompt, setShowLecturePrompt] = useState(false);
   const [lectureEvents, setLectureEvents] = useState([]);
   const [useLectureContent, setUseLectureContent] = useState(false);
+  const [checkedTopics, setCheckedTopics] = useState([]);
+  const [newTopic, setNewTopic] = useState({});
+  const [otherTopics, setOtherTopics] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -56,6 +61,7 @@ const EventModal = ({
     const filteredLectureEvents = calendarEvents.filter(
       (evt) =>
         evt.type === "Lecture" &&
+        evt.className === event.className &&
         new Date(evt.startDate) >= new Date() &&
         new Date(evt.startDate) <= new Date(event.startDate)
     );
@@ -69,9 +75,22 @@ const EventModal = ({
 
   const handleUseLectureContent = () => {
     setUseLectureContent(true);
+    const mappedTopics = lectureEvents.map((event) => ({
+      topic: event.title,
+      checked: true,
+    }));
+    setCheckedTopics(mappedTopics);
+    const allLectureEvents = calendarEvents.filter((evt) => 
+      evt.type === "Lecture" && evt.className === event.className);
+    const otherLectureEvents = allLectureEvents.filter((evt) => !lectureEvents.includes(evt));
+    setOtherTopics(otherLectureEvents);
   };
 
   const handleConfirmLectureContent = async () => {
+    const selectedTopics = checkedTopics.filter((topic) => topic.checked === true).map((topic) => topic.topic);
+    const selectedLectureEvents = calendarEvents.filter((evt) => selectedTopics.includes(evt.title));
+    console.log(selectedLectureEvents);
+    setLectureEvents(selectedLectureEvents);
     setIsGenerating(true);
     setShowLecturePrompt(false);
   };
@@ -100,7 +119,7 @@ const EventModal = ({
     for (let i = 0; i < lectureEvents.length; i++) {
       await deleteEvent(lectureEvents[i]);
     }
-  }
+  };
 
   const getClassContent = async () => {
     setIsLoading(true);
@@ -108,7 +127,7 @@ const EventModal = ({
     const userId = sessionData.userId;
     try {
       const response = await fetch(
-        `http://localhost:8080/api/users/${userId}/userclasses`,
+        `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/userclasses`,
         {
           method: "GET",
           headers: {
@@ -208,7 +227,15 @@ const EventModal = ({
           .replace(/\n/g, "<br/>");
       }
     });
-    return formattedParts.join("").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    return formattedParts
+      .join("")
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+  };
+
+  const handleCheckboxChange = (index) => {
+    const updatedCheckedTopics = [...checkedTopics];
+    updatedCheckedTopics[index].checked = !updatedCheckedTopics[index].checked;
+    setCheckedTopics(updatedCheckedTopics);
   };
 
   return (
@@ -224,7 +251,7 @@ const EventModal = ({
             className={`close-icon toggleButton ${
               backToClassModal ? "small-back-button" : ""
             }`}
-            onClick={backToClassModal ? backToClassModal : closeModal}
+            onClick={closeModal}
           >
             {backToClassModal ? "Back" : "×"}
           </div>
@@ -234,16 +261,42 @@ const EventModal = ({
             <>
               {useLectureContent ? (
                 <div>
-                  <h4>Lecture Content to be Used for Exam:</h4>
-                  <ul>
-                    {lectureEvents.map((lecture, index) => (
-                      <li key={index}>
-                        <strong>{lecture.title}</strong>
-                      </li>
+                  <h4>Topics used for exam:</h4>
+                  {checkedTopics.map((lecture, index) => (
+                    <div className="checkbox-group">
+                      <input
+                        type="checkbox"
+                        checked={lecture.checked}
+                        onChange={() => handleCheckboxChange(index)}
+                      />
+                      <label>
+                        <strong>{lecture.topic}</strong>
+                      </label>
+                    </div>
+                  ))}
+                  <select
+                    value={newTopic}
+                    onChange={(e) => {
+                      const newCheckedTopic = { topic: e.target.value, checked: true };
+                      setCheckedTopics((checkedTopics) => [
+                        ...checkedTopics, newCheckedTopic,
+                      ]);
+                      setOtherTopics(otherTopics.filter((topic) => topic.title !== e.target.value))
+                      setNewTopic("");
+                    }}
+                  >
+                    <option value="" hidden>
+                      Select a topic
+                    </option>
+                    {otherTopics.map((obj, index) => (
+                      <option key={index} value={obj.title}>
+                        {obj.title}
+                      </option>
                     ))}
-                  </ul>
+                  </select>
                   <p>
-                    Please confirm that the above lecture topics cover the exam content.
+                    Please confirm that the above lecture topics cover the exam
+                    content.
                   </p>
                   <div className="d-flex justify-content-start">
                     <button
@@ -263,12 +316,16 @@ const EventModal = ({
               ) : (
                 <div>
                   <p>
-                    We found lecture content between now and the exam date. Would
-                    you like to use this lecture content as the exam content, or
-                    would you prefer to specify the content manually?
+                    We found lecture content between now and the exam date.
+                    Would you like to use this lecture content as the exam
+                    content, or would you prefer to specify the content
+                    manually?
                   </p>
                   <div className="d-flex justify-content-between">
-                    <button className="button" onClick={handleUseLectureContent}>
+                    <button
+                      className="button"
+                      onClick={handleUseLectureContent}
+                    >
                       Use Lecture Content
                     </button>
                     <button
@@ -358,14 +415,10 @@ const EventModal = ({
                         !event.contentGenerated && "generate-button"
                       }`}
                       onClick={() => {
-                        if (event.contentGenerated) {
-                          setPracticeOpen(true);
-                        } else {
-                          handleGenerateClick();
-                        }
+                        navigate(`/practice/${event.id}`);
                       }}
                     >
-                      {event.contentGenerated ? <>View Practice</> : <>Generate Practice</>}
+                      Take Practice Quiz
                     </button>
                   </div>
                 ) : event.type === "Exam" && !isEditing ? (
@@ -373,7 +426,9 @@ const EventModal = ({
                     <button
                       onClick={handleGenerateClick}
                       className={`button ${
-                        event.contentGenerated ? "button-disabled" : "generate-button"
+                        event.contentGenerated
+                          ? "button-disabled"
+                          : "generate-button"
                       }`}
                       disabled={event.contentGenerated}
                     >
@@ -391,7 +446,10 @@ const EventModal = ({
               {isEditing ? (
                 <>
                   <textarea value={content} onChange={handleContentChange} />
-                  <button className="button done-button" onClick={handleDoneClick}>
+                  <button
+                    className="button done-button"
+                    onClick={handleDoneClick}
+                  >
                     Done
                   </button>
                 </>
@@ -408,11 +466,17 @@ const EventModal = ({
           {!isEditing ? (
             <>
               {event.type !== "Study Session" && (
-                <button className="button edit-button" onClick={handleEditClick}>
+                <button
+                  className="button edit-button"
+                  onClick={handleEditClick}
+                >
                   Edit
                 </button>
               )}
-              <button className="button delete-button" onClick={handleDeleteClick}>
+              <button
+                className="button delete-button"
+                onClick={handleDeleteClick}
+              >
                 Delete
               </button>
             </>

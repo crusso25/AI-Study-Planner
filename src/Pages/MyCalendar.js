@@ -2,7 +2,6 @@ import React, { useState, useEffect, useContext } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import openai from "../openai.js";
 import { AccountContext } from "../User/Account.js";
 import EventModal from "../Modals/EventModal.js";
 import "./MyCalendar.css";
@@ -11,9 +10,11 @@ import Header from "./Header.js";
 const localizer = momentLocalizer(moment);
 
 const MyCalendar = () => {
-  const { getSession } = useContext(AccountContext);
+  const { getSession, addStudySessions, editUserEvent, deleteCalendarEvent } =
+    useContext(AccountContext);
   const [sessionData, setSessionData] = useState(null);
   const [calendarEvents, setCalendarEvents] = useState([]);
+  const [selectedClasses, setSelectedClasses] = useState(new Set());
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [classes, setClasses] = useState([]);
@@ -21,35 +22,6 @@ const MyCalendar = () => {
   const [viewDate, setViewDate] = useState(new Date());
   const [isSidebarVisible, setSidebarVisible] = useState(true);
   const [selectedTypes, setSelectedTypes] = useState(new Set());
-  const [chatMessages, updateChat] = useState([
-    {
-      role: "system",
-      content:
-        "You will be given the content that is covered for a certain specified class, along with the content that is covered for an exam in that class. Make a list of study sessions that start at a Feb 1 2023, until the date of the exam, which will be given to you. Make sure that the study sessions cover all topics / material that will be tested on the exam. Give your response in this exact format (JSON format). For your first response, nothing other than these exact formats should be given in the response, it must be exactly as stated in the formats given." +
-        `[{
-          "week": "Week X",
-          "sessions": [
-            {
-              "title": "Study: {Specific topic this study session covers}",
-              "date": "YYYY-MM-DD",
-              "startTime": "HH:MM",
-              "endTime": "HH:MM",
-              "content": "{Topic}"
-            },
-            {
-              "title": "Study: {Specific topic this study session covers}",
-              "date": "YYYY-MM-DD",
-              "startTime": "HH:MM",
-              "endTime": "HH:MM",
-              "content": "{Topic}"
-            }
-            ...
-          ]
-        }
-        **Repeat for each week, make sure that no title has the same name for any session. For testing purposes make start time 8:00 and end time 9:00.**
-    ]`,
-    },
-  ]);
 
   const classColors = [
     "#007bff",
@@ -83,14 +55,14 @@ const MyCalendar = () => {
 
   useEffect(() => {
     filterEvents();
-  }, [calendarEvents, selectedTypes]);
+  }, [calendarEvents, selectedTypes, selectedClasses]);
 
   const fetchEvents = async (userSession) => {
     const accessToken = userSession.accessToken;
     const userId = userSession.userId;
     try {
       const response = await fetch(
-        `http://localhost:8080/api/users/${userId}/calendarevents`,
+        `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/calendarevents`,
         {
           method: "GET",
           headers: {
@@ -101,7 +73,6 @@ const MyCalendar = () => {
       );
       const data = await response.json();
       if (response.ok) {
-        console.log("Response from API:", data);
         const userEvents = data.content.map((item) => ({
           title:
             item.type === "Study Session"
@@ -119,8 +90,11 @@ const MyCalendar = () => {
           examFor: item.examFor,
         }));
         setCalendarEvents(userEvents);
+
         const classSet = new Set(data.content.map((item) => item.className));
         setClasses([...classSet]);
+        setSelectedClasses(new Set([...classSet])); // Select all classes by default
+
         const typeSet = new Set(data.content.map((item) => item.type));
         setEventTypes([...typeSet]);
         setSelectedTypes(new Set([...typeSet]));
@@ -136,13 +110,14 @@ const MyCalendar = () => {
     setSelectedEvent(event);
   };
 
-  const handleClassClick = (className) => {
-    const classEvents = calendarEvents.filter(
-      (event) => event.className === className
-    );
-    if (classEvents.length > 0) {
-      setViewDate(classEvents[0].startDate);
+  const handleClassToggle = (className) => {
+    const updatedClasses = new Set(selectedClasses);
+    if (updatedClasses.has(className)) {
+      updatedClasses.delete(className);
+    } else {
+      updatedClasses.add(className);
     }
+    setSelectedClasses(updatedClasses);
   };
 
   const eventStyleGetter = (event) => {
@@ -171,76 +146,11 @@ const MyCalendar = () => {
   };
 
   const filterEvents = () => {
-    const filtered = calendarEvents.filter((event) =>
-      selectedTypes.has(event.type)
+    const filtered = calendarEvents.filter(
+      (event) =>
+        selectedTypes.has(event.type) && selectedClasses.has(event.className)
     );
     setFilteredEvents(filtered);
-  };
-
-  const editUserEvent = async (
-    event,
-    newContent,
-    newContentGenerated,
-    practiceProblems
-  ) => {
-    const accessToken = sessionData.accessToken;
-    const userId = sessionData.userId;
-    const updatedContent = newContent !== null ? newContent : event.content;
-    const updatedContentGenerated =
-      newContentGenerated !== null
-        ? newContentGenerated
-        : event.contentGenerated;
-    const updatedPracticeProblems =
-      practiceProblems !== null ? practiceProblems : event.practiceProblems;
-
-    try {
-      const response = await fetch(
-        `http://localhost:8080/api/users/${userId}/calendarevents/${event.id}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            className: event.className,
-            endDate: event.endDate,
-            startDate: event.startDate,
-            id: event.id,
-            title: event.title,
-            type: event.type,
-            content: updatedContent,
-            contentGenerated: updatedContentGenerated,
-            practiceProblems: updatedPracticeProblems,
-          }),
-        }
-      );
-      const data = await response.json();
-      if (response.ok) {
-        console.log("Response from API:", data);
-        const updatedEvents = calendarEvents.map((e) =>
-          e === event
-            ? {
-                ...e,
-                content: updatedContent,
-                contentGenerated: updatedContentGenerated,
-                practiceProblems: updatedPracticeProblems,
-              }
-            : e
-        );
-        setCalendarEvents(updatedEvents);
-        setSelectedEvent({
-          ...event,
-          content: updatedContent,
-          contentGenerated: updatedContentGenerated,
-          practiceProblems: updatedPracticeProblems,
-        });
-      } else {
-        console.error("Failed to Edit Event:", data.error);
-      }
-    } catch (err) {
-      console.error("Error Editing Event:", err);
-    }
   };
 
   const parseCalendarResponse = async (response, className) => {
@@ -262,130 +172,16 @@ const MyCalendar = () => {
     return events;
   };
 
-  const addCalendarEvent = async (calendarEvent) => {
-    if (sessionData) {
-      const accessToken = sessionData.accessToken;
-      const userId = sessionData.userId;
-      try {
-        const response = await fetch(
-          `http://localhost:8080/api/users/${userId}/calendarevents`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              title: calendarEvent.title,
-              startDate: calendarEvent.startDate,
-              endDate: calendarEvent.endDate,
-              content: calendarEvent.content,
-              className: calendarEvent.className,
-              type: calendarEvent.type,
-              contentGenerated: false,
-              examFor: calendarEvent.examFor,
-            }),
-          }
-        );
-        const data = await response.json();
-        if (response.ok) {
-          console.log("Response from API:", data);
-        } else {
-          console.error("Failed to add event:", data.error);
-        }
-      } catch (err) {
-        console.error("Error adding event:", err);
-      }
-    } else {
-      console.error("User is not authenticated");
-    }
-  };
-
-  const deleteCalendarEvent = async (event) => {
-    const accessToken = sessionData.accessToken;
-    const userId = sessionData.userId;
-
-    try {
-      const response = await fetch(
-        `http://localhost:8080/api/users/${userId}/calendarevents/${event.id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (response.ok) {
-        console.log(`Deleted event with ID: ${event.id}`);
-      } else {
-        const data = await response.json();
-        console.error(
-          `Failed to delete event with ID: ${event.id}`,
-          data.error
-        );
-      }
-    } catch (err) {
-      console.error(`Error deleting event with ID: ${event.id}`, err);
-    }
-  };
-
-  const addStudySessions = async (
+  const addStudySessionsToCalendar = async (
     classContent,
     examEvent,
     lectureEvents
   ) => {
-    let studySessions = lectureEvents;
-    if (lectureEvents.length === 0) {
-      const initialMessage = {
-        role: "user",
-        content: `The class is ${examEvent.className}, the date of this exam is ${examEvent.startDate}. This is the content that is covered on this exam: ${examEvent.content}. This is the content for the entire class: ${classContent}`,
-      };
-      let updatedChatMessages = [...chatMessages, initialMessage];
-      updateChat(updatedChatMessages);
-
-      const initialResponse = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: updatedChatMessages,
-      });
-
-      studySessions = await parseCalendarResponse(
-        initialResponse.choices[0].message.content,
-        examEvent.className
-      );
-    }
-    const updatedPrompt = [
-      {
-        role: "system",
-        content: `You will be given a course, along with a specific topic covered in that course. Make a study guide containing detailed information and key concepts needed to master this content. 
-        Your study guide should only cover the content relevant to the topic that you are prompted. Do not include practice problems or questions in the additionalContent.
-        Do not include anything else in your response other than the study guide. (I.E. Don't include an intro or outro to your response saying "Here is a detailed study guide ..." or anything along those lines. Keep the study guide clean.)`,
-      },
-      {
-        role: "user",
-        content: `The course is ${examEvent.className}, and the content covered on the entire exam is ${examEvent.content}.`,
-      },
-    ];
-
-    console.log(studySessions);
-    for (let session of studySessions) {
-      const specificChatMessage = {
-        role: "user",
-        content: `This is the topic to make study guide on: ${session.content}.`,
-      };
-      const specificMessageInput = [...updatedPrompt, specificChatMessage];
-
-      const specificResponse = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: specificMessageInput,
-      });
-      const specificContent = specificResponse.choices[0].message.content;
-      session.type = "Study Session";
-      session.content += `\n\nDetailed Content:\n${specificContent}`;
-      session.examFor = examEvent.title + ", " + examEvent.className;
-      await addCalendarEvent(session);
-    }
+    const studySessions = await addStudySessions(
+      classContent,
+      examEvent,
+      lectureEvents
+    );
 
     const updatedCalendarEvents = [...calendarEvents, ...studySessions];
     setCalendarEvents(updatedCalendarEvents);
@@ -411,7 +207,7 @@ const MyCalendar = () => {
           events={filteredEvents}
           startAccessor="startDate"
           endAccessor="endDate"
-          style={{ height: "1200px", width: "100%" }}
+          style={{ height: "900px", width: "100%" }}
           onSelectEvent={handleEventClick}
           defaultView="month"
           date={viewDate}
@@ -421,21 +217,23 @@ const MyCalendar = () => {
       </div>
       {isSidebarVisible && (
         <div className="class-list">
-          <br />
-          <br />
           <h3>Classes</h3>
           <ul>
             {classes.map((className, index) => (
-              <li
-                className="class-button"
-                key={index}
-                onClick={() => handleClassClick(className)}
-              >
+              <li key={index}>
                 <div
-                  className="class-color-box"
-                  style={{ backgroundColor: getClassColor(className) }}
+                  className="class-color-circle"
+                  style={{
+                    backgroundColor: selectedClasses.has(className)
+                      ? getClassColor(className)
+                      : "white",
+                    border: `2px solid ${getClassColor(className)}`,
+                  }}
+                  onClick={() => handleClassToggle(className)}
                 ></div>
-                {className}
+                <span onClick={() => handleClassToggle(className)}>
+                  {className}
+                </span>
               </li>
             ))}
           </ul>
@@ -457,30 +255,55 @@ const MyCalendar = () => {
         </div>
       )}
       <button
-        className="toggle-sidebar-button"
+        className={"toggle-filters"}
         onClick={() => setSidebarVisible(!isSidebarVisible)}
       >
-        {isSidebarVisible ? "Hide Classes" : "Show Classes"}
+        {isSidebarVisible ? "Hide" : "Filters"}
       </button>
       {selectedEvent && (
         <EventModal
           event={selectedEvent}
           closeModal={() => setSelectedEvent(null)}
-          updateEvent={(
+          updateEvent={async (
             event,
             newContent,
             contentGenerated,
             practiceProblems
           ) => {
-            editUserEvent(
+            const [
+              updatedContent,
+              updatedContentGenerated,
+              updatedPracticeProblems,
+            ] = await editUserEvent(
               event,
               newContent,
               contentGenerated,
               practiceProblems
             );
+            const updatedEvents = calendarEvents.map((e) =>
+              e === event
+                ? {
+                    ...e,
+                    content: updatedContent,
+                    contentGenerated: updatedContentGenerated,
+                    practiceProblems: updatedPracticeProblems,
+                  }
+                : e
+            );
+            setCalendarEvents(updatedEvents);
+            setSelectedEvent({
+              ...event,
+              content: updatedContent,
+              contentGenerated: updatedContentGenerated,
+              practiceProblems: updatedPracticeProblems,
+            });
           }}
           addStudySessions={async (classContent, event, lectureEvents) => {
-            await addStudySessions(classContent, event, lectureEvents);
+            await addStudySessionsToCalendar(
+              classContent,
+              event,
+              lectureEvents
+            );
             fetchEvents(sessionData);
             setSelectedEvent(null);
           }}

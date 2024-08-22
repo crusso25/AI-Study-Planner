@@ -2,12 +2,14 @@ import React, { useState, useContext, useEffect } from "react";
 import { Outlet, Link } from "react-router-dom";
 import { AccountContext } from "../User/Account";
 import "./Header.css";
+import SettingsModal from "../Modals/SettingsModal";
 
 const Header = () => {
   const [userPopUp, setUserPopUp] = useState(false);
   const { logout, sessionData } = useContext(AccountContext);
   const [initial, setInitial] = useState("U");
   const [username, setUsername] = useState("");
+  const [settingsPopUp, setSettingsPopUp] = useState(false);
 
   useEffect(() => {
     if (sessionData && sessionData.username) {
@@ -34,9 +36,14 @@ const Header = () => {
             {userPopUp && (
               <div id="user-pop-up" className="popup fade-in">
                 <div className="dropdown-item username-item">{username}</div>
-                <Link to="/settings" className="dropdown-item">
+                {/* <button
+                  onClick={() => {
+                    setSettingsPopUp(true);
+                  }}
+                  className="dropdown-item"
+                >
                   Settings
-                </Link>
+                </button> */}
                 <button className="dropdown-item" onClick={logout}>
                   Logout
                 </button>
@@ -44,6 +51,14 @@ const Header = () => {
                 {/* Horizontal line separator */}
               </div>
             )}
+            {settingsPopUp && (
+              <SettingsModal 
+              closeModal={() => {
+                setSettingsPopUp(false);
+              }}
+              />
+            )
+            }
             {!userPopUp && <br />}
             <Link to="/" style={{ textDecoration: "none" }}>
               <div className="page-links">Home</div>

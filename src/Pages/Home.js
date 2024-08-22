@@ -5,7 +5,8 @@ import "./Home.css";
 import EventModal from "../Modals/EventModal";
 
 const Home = () => {
-  const { getSession } = useContext(AccountContext);
+  const { getSession, editUserEvent, addStudySessions, deleteCalendarEvent } =
+    useContext(AccountContext);
   const [sessionData, setSessionData] = useState(null);
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [classes, setClasses] = useState([]);
@@ -17,7 +18,6 @@ const Home = () => {
       const session = await getSession();
       setSessionData(session);
       await fetchEvents(session);
-      console.log(selectedEvent);
     };
     fetchSession();
   }, []);
@@ -42,7 +42,7 @@ const Home = () => {
     const userId = userSession.userId;
     try {
       const response = await fetch(
-        `http://localhost:8080/api/users/${userId}/calendarevents`,
+        `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/calendarevents`,
         {
           method: "GET",
           headers: {
@@ -102,6 +102,13 @@ const Home = () => {
     (className) => getUpcomingEvents(className).length > 0
   );
 
+  const getSortedExams = () => {
+    const today = new Date();
+    return calendarEvents
+      .filter((event) => event.type === "Exam" && event.startDate >= today)
+      .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+  };
+
   return (
     <div className="main-container">
       <Header />
@@ -113,8 +120,12 @@ const Home = () => {
             value={startDate.toISOString().split("T")[0]}
             onChange={(e) => setStartDate(new Date(e.target.value))}
           />
-          <button className="week-button" onClick={handleLastWeek}>Last Week</button>
-          <button className="week-button" onClick={handleNextWeek}>Next Week</button>
+          <button className="week-button" onClick={handleLastWeek}>
+            Last Week
+          </button>
+          <button className="week-button" onClick={handleNextWeek}>
+            Next Week
+          </button>
         </div>
         {classesWithEvents.length === 0 ? (
           <div className="no-events">
@@ -142,12 +153,82 @@ const Home = () => {
             ))}
           </div>
         )}
+        <h2 style={{ marginTop: "50px" }}>Upcoming Exams</h2>
+        <div className="container-fluid practice-container">
+          <div className="row">
+            {getSortedExams().length > 0 ? (
+              getSortedExams().map((event) => (
+                <div
+                  className="practice-event-container col-md-4"
+                  key={event.id}
+                >
+                  <div className="practice-event">
+                    <h3>{event.title}</h3>
+                    <p>
+                      <strong>Class:</strong> {event.className}
+                    </p>
+                    <p>
+                      <strong>Date:</strong>{" "}
+                      {new Date(event.startDate).toLocaleDateString()}
+                    </p>
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => setSelectedEvent(event)}
+                    >
+                      View
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p>No upcoming exams.</p>
+            )}
+          </div>
+        </div>
         {selectedEvent !== null && (
           <EventModal
             event={selectedEvent}
             closeModal={() => {
               setSelectedEvent(null);
             }}
+            updateEvent={async (
+              event,
+              newContent,
+              contentGenerated,
+              practiceProblems
+            ) => {
+              const [updatedContent, updatedContentGenerated, updatedPracticeProblems] = await editUserEvent(
+                event,
+                newContent,
+                contentGenerated,
+                practiceProblems
+              );
+              const updatedEvents = calendarEvents.map((e) =>
+                e === event
+                  ? {
+                      ...e,
+                      content: updatedContent,
+                      contentGenerated: updatedContentGenerated,
+                      practiceProblems: updatedPracticeProblems,
+                    }
+                  : e
+              );
+              setCalendarEvents(updatedEvents);
+              setSelectedEvent({
+                ...event,
+                content: updatedContent,
+                contentGenerated: updatedContentGenerated,
+                practiceProblems: updatedPracticeProblems,
+              });
+            }}
+            addStudySessions={async (className, examEvent, lectureEvents) => {
+              await addStudySessions(className, examEvent, lectureEvents);
+              setSelectedEvent(null);
+            }}
+            deleteEvent={(event) => {
+              deleteCalendarEvent(event);
+            }}
+            calendarEvents={calendarEvents}
           />
         )}
       </div>

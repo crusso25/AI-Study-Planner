@@ -49,16 +49,12 @@ const Classes = () => {
     fetchSession();
   }, []);
 
-  useEffect(() => {
-    console.log(calendarEvents);
-  }, []);
-
   const fetchEvents = async (userSession) => {
     const accessToken = userSession.accessToken;
     const userId = userSession.userId;
     try {
       const response = await fetch(
-        `http://localhost:8080/api/users/${userId}/calendarevents`,
+        `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/calendarevents`,
         {
           method: "GET",
           headers: {
@@ -94,7 +90,7 @@ const Classes = () => {
     const userId = userSession.userId;
     try {
       const response = await fetch(
-        `http://localhost:8080/api/users/${userId}/userclasses`,
+        `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/userclasses`,
         {
           method: "GET",
           headers: {
@@ -130,7 +126,7 @@ const Classes = () => {
         };
 
         const response = await fetch(
-          `http://localhost:8080/api/users/${userId}/userclasses`,
+          `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/userclasses`,
           {
             method: "POST",
             headers: {
@@ -165,7 +161,7 @@ const Classes = () => {
       const classId = classIds[classIndex];
       try {
         const response = await fetch(
-          `http://localhost:8080/api/users/${userId}/userclasses/${classId}`,
+          `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/userclasses/${classId}`,
           {
             method: "DELETE",
             headers: {
@@ -202,7 +198,7 @@ const Classes = () => {
       for (const event of eventsToDelete) {
         try {
           const response = await fetch(
-            `http://localhost:8080/api/users/${userId}/calendarevents/${event.id}`,
+            `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/calendarevents/${event.id}`,
             {
               method: "DELETE",
               headers: {

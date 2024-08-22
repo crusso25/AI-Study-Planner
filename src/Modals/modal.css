@@ -117,6 +117,8 @@
 .input-group {
   position: relative;
   margin-bottom: 20px;
+  display: flex;
+  align-items: center;
 }
 
 .input {
@@ -131,6 +133,7 @@
 .label {
   position: absolute;
   left: 15px;
+  bottom: 20px;
   color: #000;
   font-weight: 500;
   font-size: 18px;
@@ -146,7 +149,7 @@
 
 .input:focus ~ .label,
 .input:valid ~ .label {
-  transform: translateX(-10px) translateY(-50%) scale(0.8);
+  transform: translateX(-10px) translateY(-10%) scale(0.8);
   background-color: transparent;
   padding: 0.2em;
 }
@@ -160,6 +163,7 @@
   border-radius: 20px;
   cursor: pointer;
   margin-left: 10px;
+  margin-right: 10px;
   box-shadow: #5e5df0 0 10px 20px -10px;
   transition: all 0.3s ease;
 }
@@ -251,7 +255,10 @@ textarea {
 }
 
 .assignment-types {
-  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 50%;
 }
 
 .assignment-types h5 {
@@ -269,12 +276,13 @@ textarea {
 
 .new-assignment-type {
   display: flex;
-  width: 220px;
+  width: 240px;
 }
 
 .new-assignment-type input {
   flex-grow: 1;
   width: 150px;
+  height: 30px;
 }
 
 .add-button {

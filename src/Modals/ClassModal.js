@@ -69,7 +69,7 @@ const ClassModal = ({
     const userId = sessionData.userId;
     try {
       const response = await fetch(
-        `http://localhost:8080/api/users/${userId}/calendarevents/${event.id}`,
+        `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/calendarevents/${event.id}`,
         {
           method: "PUT",
           headers: {
@@ -105,7 +105,7 @@ const ClassModal = ({
     const userId = sessionData.userId;
     try {
       const response = await fetch(
-        `http://localhost:8080/api/users/${userId}/calendarevents`,
+        `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/calendarevents`,
         {
           method: "POST",
           headers: {

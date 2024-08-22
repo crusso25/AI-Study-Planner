@@ -8,12 +8,13 @@ import openai from "../openai";
 
 const PracticeProblemPage = () => {
   const { id } = useParams();
-  const { getSession } = useContext(AccountContext);
+  const { getSession, editUserEvent } = useContext(AccountContext);
   const [sessionData, setSessionData] = useState(null);
   const [practiceProblems, setPracticeProblems] = useState([]);
   const [currentProblemIndex, setCurrentProblemIndex] = useState(0);
   const [showResults, setShowResults] = useState(false);
-  const navigate = useNavigate(); // Use useNavigate instead of useHistory
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -24,12 +25,43 @@ const PracticeProblemPage = () => {
     fetchSession();
   }, []);
 
+  const makePractice = async (practiceEvent) => {
+    setIsLoading(true);
+    const newMessage = [
+      {
+        role: "system",
+        content: `You will be given a course, along with a specific topic from that course. 
+          Make a list of five total practice problems / questions from the given topic that could be asked on an exam for the given course. 
+          Do not include anything else in your response other than the study guide. Use LaTeX syntax if there is any mathematical notation needed.
+          (I.E. Don't include an intro or outro to your response saying "Here are practice questions ..." or anything along those lines. Keep the problem list clean.)
+          Make the practice problem list labels each practice problem with a number before it. For example: 1. {practice problem 1}. \n 2. {practice problem 2} ...`,
+      },
+      {
+        role: "user",
+        content:
+          "The course is " +
+          practiceEvent.className +
+          ", and the content that these problems should be based off of is " +
+          practiceEvent.content.split("\n")[0] +
+          ".",
+      },
+    ];
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: newMessage,
+    });
+    const parsedResponse = response.choices[0].message.content;
+    await editUserEvent(practiceEvent, null, true, parsedResponse);
+    setIsLoading(false);
+    return parsedResponse;
+  };
+
   const fetchPracticeProblems = async (session) => {
     const accessToken = session.accessToken;
     const userId = session.userId;
     try {
       const response = await fetch(
-        `http://localhost:8080/api/users/${userId}/calendarevents/${id}`,
+        `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/calendarevents/${id}`,
         {
           method: "GET",
           headers: {
@@ -40,7 +72,14 @@ const PracticeProblemPage = () => {
       );
       const data = await response.json();
       if (response.ok) {
-        const problemsArray = data.practiceProblems
+        let practice;
+        if (data.practiceProblems === null) {
+          practice = await makePractice(data);
+        }
+        else {
+          practice = data.practiceProblems
+        }
+        const problemsArray = practice
           .split(/[0-9]+\./)
           .filter(Boolean)
           .map((problem) => ({
@@ -98,6 +137,7 @@ const PracticeProblemPage = () => {
   };
 
   const handleSubmitAnswer = async (practiceQuestion) => {
+    setIsLoading(true);
     const currentProblem = practiceProblems[currentProblemIndex];
 
     if (currentProblem.isLocked) return;
@@ -126,7 +166,7 @@ const PracticeProblemPage = () => {
       },
       {
         role: "user",
-        content: `The response for this question that you will check is "${currentProblem.userAnswer}". Your response should either be 'True' if the answer is correct, or 'False' if the user's answer is wrong.`,
+        content: `The response for the original question provided to you that you will check is "${currentProblem.userAnswer}". Your response should either be 'True' if the answer is correct, or 'False' if the user's answer is wrong.`,
       },
     ];
     const correctResponse = await openai.chat.completions.create({
@@ -154,6 +194,7 @@ const PracticeProblemPage = () => {
       }
     }
     setPracticeProblems(updatedProblems);
+    setIsLoading(false);
   };
 
   const handleChangeAnswer = (value) => {
@@ -178,6 +219,11 @@ const PracticeProblemPage = () => {
     <div className="main-container">
       <Header />
       <div className="container practice-problem-page">
+        {isLoading && (
+          <div className="loading-overlay">
+            <div className="spinner"></div>
+          </div>
+        )}
         <h2>Practice Problems</h2>
         {showResults ? (
           <div className="results-container">
@@ -185,8 +231,9 @@ const PracticeProblemPage = () => {
             <p>
               You got{" "}
               {
-                practiceProblems.filter((problem) => problem.feedback === "Correct!")
-                  .length
+                practiceProblems.filter(
+                  (problem) => problem.feedback === "Correct!"
+                ).length
               }{" "}
               out of {practiceProblems.length} correct.
             </p>
@@ -202,7 +249,10 @@ const PracticeProblemPage = () => {
                 </li>
               ))}
             </ul>
-            <button className="btn btn-secondary" onClick={handleBackToPractice}>
+            <button
+              className="btn btn-secondary"
+              onClick={handleBackToPractice}
+            >
               Back to Practice
             </button>
           </div>

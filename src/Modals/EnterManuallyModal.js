@@ -12,6 +12,7 @@ const EnterManuallyModal = ({
   calendarEvents,
   assignmentTypes,
   deleteEvent,
+  uploadEvents,
 }) => {
   const [addingEventType, setAddingEventType] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -102,8 +103,11 @@ const EnterManuallyModal = ({
         <>
           <div className="modal-header">
             <h2>Add Dates For {className}</h2>
-            <div className="close-icon" onClick={closeModal}>
-              &times;
+            <div
+              className="small-back-button"
+              onClick={closeModal}
+            >
+              Back
             </div>
           </div>
           <div className="modal-content">
@@ -182,7 +186,7 @@ const EnterManuallyModal = ({
             <button
               className="button"
               onClick={() => {
-                closeModal(updatedCalendarEvents);
+                uploadEvents(updatedCalendarEvents);
               }}
             >
               Finish

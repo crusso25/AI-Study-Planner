@@ -26,7 +26,7 @@ const Practice = () => {
     const userId = userSession.userId;
     try {
       const response = await fetch(
-        `http://localhost:8080/api/users/${userId}/calendarevents`,
+        `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/calendarevents`,
         {
           method: "GET",
           headers: {
