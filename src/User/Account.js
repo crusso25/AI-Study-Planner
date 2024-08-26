@@ -14,27 +14,23 @@ const Account = (props) => {
   const [isLogin, setIsLogin] = useState(true);
   const [titleText, setTitleText] = useState("");
   const navigate = useNavigate();
-  const fullTitle = "Wwelcome to StudyMaster";
+  const fullTitle = "Welcome to StudyMaster";
 
   useEffect(() => {
     checkSession();
   }, [navigate]);
 
   useEffect(() => {
-    let index = 0;
-    setTitleText(""); // Reset titleText before starting
-    const interval = setInterval(() => {
-      if (index < fullTitle.length) {
-        setTitleText((prev) => prev + fullTitle.charAt(index));
-        index++;
-      } else {
-        clearInterval(interval);
+    const animateTitle = async () => {
+      for (let index = 1; index <= fullTitle.length; index++) {
+        setTimeout(() => {
+          setTitleText(fullTitle.substring(0, index));
+        }, index * 100); // Adjust the speed by changing the multiplier
       }
-    }, 100); // Adjust typing speed here (milliseconds)
+    };
 
-    // Cleanup interval on component unmount
-    return () => clearInterval(interval);
-  }, [fullTitle]); // Dependency array includes fullTitle
+    animateTitle();
+  }, []);
 
   const checkSession = async () => {
     const accessToken = localStorage.getItem("accessToken");
@@ -192,17 +188,17 @@ const Account = (props) => {
     return events;
   };
 
-  const addStudySessions = async (classContent, examEvent, lectureEvents) => {
-    let studySessions = lectureEvents;
-    if (lectureEvents.length === 0) {
-      const initialMessage = [
-        {
-          role: "system",
-          content:
-            "You will be given the content that is covered for a certain specified class, along with the content that is covered for an exam in that class. Make a list of study sessions that start at " +
-            examEvent.startDate.toString() +
-            ", until the date of the exam, which will be given to you. Make sure that the study sessions cover all topics / material that will be tested on the exam. Give your response in this exact format (JSON format). For your first response, nothing other than these exact formats should be given in the response, it must be exactly as stated in the formats given." +
-            `[{
+  const addStudySessions = async (classContent, examEvent, topicList) => {
+    const today = new Date();
+    const dateString = today.toISOString().split('T')[0];
+    const initialMessage = [
+      {
+        role: "system",
+        content:
+          "You will be given the content that is covered for an exam in the course " + examEvent.className + ". Make a list of study sessions that start at " +
+          dateString +
+          ", until the date of the exam, which is " + examEvent.startDate.toISOString().split('T')[0] + ". Make sure that the study sessions cover all topics that will be tested on the exam. Give your response in this exact format (JSON format). Nothing other than these exact formats should be given in the response, it must be exactly as stated in the format given." +
+          `[{
             "week": "Week X",
             "sessions": [
               {
@@ -222,25 +218,25 @@ const Account = (props) => {
               ...
             ]
           }
-          **Repeat for each week, make sure that no title has the same name for any session. For testing purposes make start time 8:00 and end time 9:00.**
+          **Repeat for each week, make sure that no title has the same name for any session. Make the start time 5pm to 6pm. Evenly distribute the topics between the start date and the date of the exam, and make sure that each study session is for one specific main topic (I.E there shouldnt be multiple big topics for one study session).**
       ]`,
-        },
-        {
-          role: "user",
-          content: `The class is ${examEvent.className}, the date of this exam is ${examEvent.startDate}. This is the content that is covered on this exam: ${examEvent.content}. This is the content for the entire class: ${classContent}`,
-        },
-      ];
+      },
+      {
+        role: "user",
+        content: `These are the topics that are covered on this exam: ${topicList}.`,
+      },
+    ];
 
-      const initialResponse = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: initialMessage,
-      });
+    const initialResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: initialMessage,
+    });
 
-      studySessions = await parseCalendarResponse(
-        initialResponse.choices[0].message.content,
-        examEvent.className
-      );
-    }
+    const studySessions = await parseCalendarResponse(
+      initialResponse.choices[0].message.content,
+      examEvent.className
+    );
+
     const updatedPrompt = [
       {
         role: "system",
