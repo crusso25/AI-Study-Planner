@@ -26,7 +26,7 @@ const Practice = () => {
     const userId = userSession.userId;
     try {
       const response = await fetch(
-        `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/calendarevents`,
+        `https://api.studymaster.io/api/users/${userId}/calendarevents`,
         {
           method: "GET",
           headers: {
@@ -119,7 +119,31 @@ const Practice = () => {
               </div>
             ))
           ) : (
-            <p>No practice quizzes available.</p>
+            <>
+              <p>No practice quizzes available.</p>
+              <div>
+                Click{" "}
+                <span>
+                  <button
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "blue",
+                      textDecoration: "underline",
+                      cursor: "pointer",
+                      padding: 0,
+                      font: "inherit",
+                    }}
+                    onClick={() => {
+                      navigate("../classes");
+                    }}
+                  >
+                    here
+                  </button>
+                </span>{" "}
+                to add a class and get practicing
+              </div>
+            </>
           )}
         </div>
       </div>

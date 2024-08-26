@@ -1,8 +1,8 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import "./dragdrop.css";
 
-const DragDrop = ({ onFilesAdded }) => {
+const DragDrop = ({ onFilesAdded, resetFilesUploaded }) => {
   const [filesUploaded, setFilesUploaded] = useState(false);
 
   const onDrop = useCallback(
@@ -14,6 +14,10 @@ const DragDrop = ({ onFilesAdded }) => {
     [onFilesAdded]
   );
 
+  useEffect(() => {
+    setFilesUploaded(false);
+  }, [resetFilesUploaded]);
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   return (
@@ -24,7 +28,7 @@ const DragDrop = ({ onFilesAdded }) => {
       ) : filesUploaded ? (
         <p className="upload-success">✔ File Uploaded Successfully</p>
       ) : (
-        <p>Upload Course Syllabus (Allowed Files: png or pdf)</p> 
+        <p>Upload Course Syllabus File (PDF or PNG)</p> 
       )}
     </div>
   );

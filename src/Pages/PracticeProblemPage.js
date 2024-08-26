@@ -61,7 +61,7 @@ const PracticeProblemPage = () => {
     const userId = session.userId;
     try {
       const response = await fetch(
-        `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/calendarevents/${id}`,
+        `https://api.studymaster.io/api/users/${userId}/calendarevents/${id}`,
         {
           method: "GET",
           headers: {
@@ -166,7 +166,7 @@ const PracticeProblemPage = () => {
       },
       {
         role: "user",
-        content: `The response for the original question provided to you that you will check is "${currentProblem.userAnswer}". Your response should either be 'True' if the answer is correct, or 'False' if the user's answer is wrong.`,
+        content: `The response for the original question provided to you that you will check is "${currentProblem.userAnswer}". Your response should either be 'True' if the answer is correct and specific, or 'False' if the user's answer is wrong or too general to be considered correct.`,
       },
     ];
     const correctResponse = await openai.chat.completions.create({

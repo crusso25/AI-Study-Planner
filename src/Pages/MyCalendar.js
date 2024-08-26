@@ -62,7 +62,7 @@ const MyCalendar = () => {
     const userId = userSession.userId;
     try {
       const response = await fetch(
-        `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/calendarevents`,
+        `https://api.studymaster.io/api/users/${userId}/calendarevents`,
         {
           method: "GET",
           headers: {

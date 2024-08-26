@@ -63,8 +63,8 @@ const Header = () => {
             <Link to="/" style={{ textDecoration: "none" }}>
               <div className="page-links">Home</div>
             </Link>
-            <Link to="/classes" style={{ textDecoration: "none" }}>
-              <div className="page-links">Classes</div>
+            <Link to="/courses" style={{ textDecoration: "none" }}>
+              <div className="page-links">Courses</div>
             </Link>
             <Link to="/calendar" style={{ textDecoration: "none" }}>
               <div className="page-links">Calendar</div>

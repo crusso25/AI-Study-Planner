@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import DragDrop from "./DragDrop";
 import openai from "../openai";
 import * as pdfjsLib from "pdfjs-dist/webpack";
@@ -33,6 +34,8 @@ const Modal = ({ addClassToList, closeModal }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [formattedFileContent, setFormattedFileContent] = useState("");
   const [checkWarning, setCheckWarning] = useState(false);
+  const [syllabusContents, setSyllabusContents] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -48,7 +51,7 @@ const Modal = ({ addClassToList, closeModal }) => {
   }, []);
 
   useEffect(() => {
-    console.log(fileContents);
+    console.log(syllabusContents);
   }, []);
 
   const assignmentTypesToString = () => {
@@ -64,7 +67,7 @@ const Modal = ({ addClassToList, closeModal }) => {
       const userId = sessionData.userId;
       try {
         const response = await fetch(
-          `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/calendarevents`,
+          `https://api.studymaster.io/api/users/${userId}/calendarevents`,
           {
             method: "POST",
             headers: {
@@ -139,7 +142,10 @@ const Modal = ({ addClassToList, closeModal }) => {
 
   const processQuestion = async () => {
     setIsLoading(true);
-    const filesContent = fileContents.join("\n\n");
+    let filesContent = syllabusContents;
+    if (fileContents.length !== 0) {
+      filesContent = fileContents.join("\n\n");
+    }
     const newMessage = [
       {
         role: "system",
@@ -206,23 +212,7 @@ const Modal = ({ addClassToList, closeModal }) => {
 
   const readPNG = async (file) => {
     const result = await Tesseract.recognize(URL.createObjectURL(file), "eng");
-    console.log(result.data.text);
-    const reformatPng = [
-      {
-        role: "system",
-        content:
-          "I am going to give you a course syllabus that was given as a png and parsed to text. Give this syllabus back in human readable format. Do not include anything other than the syllabus in human readable format in your response. ",
-      },
-      {
-        role: "user",
-        content: "Here is the png parsed syllabus: " + result.data.text,
-      },
-    ];
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: reformatPng,
-    });
-    setFormattedFileContent(response.choices[0].message.content);
+    setFormattedFileContent(result.data.text);
     return result.data.text;
   };
 
@@ -306,10 +296,10 @@ const Modal = ({ addClassToList, closeModal }) => {
                 onChange={(e) => setClassName(e.target.value)}
                 required
               />
-              <label className="label">Name of Class</label>
+              <label className="label">Name of Course</label>
             </div>
             <div className="input-group">
-              <h5>Start date: </h5>
+              <h5>Course Start Date: </h5>
               <input
                 className="input"
                 type="date"
@@ -350,9 +340,12 @@ const Modal = ({ addClassToList, closeModal }) => {
             </div>
           </div>
         </div>
-        <div className="d-flex flex-column align-items-center justify-content-center" style={{ height:"100%", marginBottom:"140px" }}>
+        <div
+          className="d-flex flex-column align-items-center justify-content-center"
+          style={{ height: "100%", marginBottom: "140px" }}
+        >
           <h3>How will you enter course information?</h3>
-          <br/>
+          <br />
           <div className="d-flex justify-content-center align-items-center">
             <button
               className="button"
@@ -371,7 +364,7 @@ const Modal = ({ addClassToList, closeModal }) => {
                 setCurrentStep(2);
               }}
             >
-              Enter Manually
+               Enter Events Manually
             </button>
           </div>
         </div>
@@ -395,15 +388,35 @@ const Modal = ({ addClassToList, closeModal }) => {
             <>
               <div className="modal-header">
                 <h2>Upload Syllabus</h2>
-                <div className="small-back-button" onClick={() => {setCurrentStep(0)}}>
+                <div
+                  className="small-back-button"
+                  onClick={() => {
+                    setCurrentStep(0);
+                  }}
+                >
                   Back
                 </div>
               </div>
-              <div className="modal-content">
-                <div id="drag-and-drop">
-                  <DragDrop onFilesAdded={onFilesAdded} />
+              <div
+                style={{ width: "100%" }}
+                className="modal-content d-flex flex-column align-items-center justify-content-between"
+              >
+                <div style={{ width: "100%" }} id="drag-and-drop">
+                  <DragDrop
+                    onFilesAdded={onFilesAdded}
+                    resetFilesUploaded={syllabusContents}
+                  />
                   <br />
                 </div>
+                <h2>or</h2>
+                <textarea
+                  value={syllabusContents}
+                  onChange={(e) => {
+                    setSyllabusContents(e.target.value);
+                  }}
+                  style={{ height: "200px" }}
+                  placeholder="Paste Syllabus Details"
+                ></textarea>
               </div>
               <div className="modal-footer">
                 <button onClick={processQuestion} className="button">
@@ -414,14 +427,18 @@ const Modal = ({ addClassToList, closeModal }) => {
           )}
           {currentStep === 2 && isManualEntry && (
             <EnterManuallyModal
-              closeModal={() => {setCurrentStep(0)}}
+              closeModal={() => {
+                setCurrentStep(0);
+              }}
               addEvent={(event) => {
                 setCalendarEvents([...calendarEvents, event]);
               }}
               className={className}
               calendarEvents={calendarEvents}
               assignmentTypes={assignmentTypes}
-              uploadEvents={async (updatedCalendarEvents) => {submitEvents(updatedCalendarEvents)}}
+              uploadEvents={async (updatedCalendarEvents) => {
+                submitEvents(updatedCalendarEvents);
+              }}
             />
           )}
           {currentStep === 3 && (
@@ -447,7 +464,10 @@ const Modal = ({ addClassToList, closeModal }) => {
                 );
                 setCalendarEvents(updatedEvents);
               }}
-              uploadEvents={async (updatedCalendarEvents) => {submitEvents(updatedCalendarEvents)}}
+              uploadEvents={async (updatedCalendarEvents) => {
+                await submitEvents(updatedCalendarEvents);
+                navigate("../");
+              }}
             />
           )}
         </div>

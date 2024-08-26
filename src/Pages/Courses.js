@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import { AccountContext } from "../User/Account.js";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "./Classes.css";
+import "./Courses.css";
 import Modal from "../Modals/modal.js";
 import ClassModal from "../Modals/ClassModal.js";
 import Header from "./Header.js";
@@ -54,7 +54,7 @@ const Classes = () => {
     const userId = userSession.userId;
     try {
       const response = await fetch(
-        `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/calendarevents`,
+        `https://api.studymaster.io/api/users/${userId}/calendarevents`,
         {
           method: "GET",
           headers: {
@@ -90,7 +90,7 @@ const Classes = () => {
     const userId = userSession.userId;
     try {
       const response = await fetch(
-        `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/userclasses`,
+        `https://api.studymaster.io/api/users/${userId}/userclasses`,
         {
           method: "GET",
           headers: {
@@ -126,7 +126,7 @@ const Classes = () => {
         };
 
         const response = await fetch(
-          `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/userclasses`,
+          `https://api.studymaster.io/api/users/${userId}/userclasses`,
           {
             method: "POST",
             headers: {
@@ -161,7 +161,7 @@ const Classes = () => {
       const classId = classIds[classIndex];
       try {
         const response = await fetch(
-          `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/userclasses/${classId}`,
+          `https://api.studymaster.io/api/users/${userId}/userclasses/${classId}`,
           {
             method: "DELETE",
             headers: {
@@ -198,7 +198,7 @@ const Classes = () => {
       for (const event of eventsToDelete) {
         try {
           const response = await fetch(
-            `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/calendarevents/${event.id}`,
+            `https://api.studymaster.io/api/users/${userId}/calendarevents/${event.id}`,
             {
               method: "DELETE",
               headers: {
@@ -243,12 +243,12 @@ const Classes = () => {
       <Header />
       <div className="container-fluid classes-container">
         <div className="d-flex flex-row justify-content-between align-items-center">
-          <h1>Your Classes:</h1>
+          <h1>Your Courses:</h1>
           <button
             onClick={() => setAddClassModalOpen(true)}
             className="btn btn-primary"
           >
-            Add Class
+            Add Course
           </button>
         </div>
         <div className="row">

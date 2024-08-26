@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import reportWebVitals from "./reportWebVitals";
-import Classes from "./Pages/Classes";
+import Courses from "./Pages/Courses";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Account } from "./User/Account";
 import MyCalendar from "./Pages/MyCalendar";
@@ -17,7 +17,7 @@ root.render(
     <Account>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="classes" element={<Classes />} />
+          <Route path="courses" element={<Courses />} />
           <Route path="calendar" element={<MyCalendar />} />
           <Route path="practice" element={<Practice />} />
           <Route path="practice/:id" element={<PracticeProblemPage />} />

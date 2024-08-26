@@ -9,7 +9,7 @@ const Verification = ({ username, password }) => {
 
   const verifyUser = async (username, verificationCode) => {
     try {
-      const response = await fetch("http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/auth/verify", {
+      const response = await fetch("https://api.studymaster.io/api/auth/verify", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -12,11 +12,29 @@ const Account = (props) => {
   const [isAuthenticated, setAuthentication] = useState(false);
   const [sessionData, setSessionData] = useState(null);
   const [isLogin, setIsLogin] = useState(true);
+  const [titleText, setTitleText] = useState("");
   const navigate = useNavigate();
+  const fullTitle = "Wwelcome to StudyMaster";
 
   useEffect(() => {
     checkSession();
   }, [navigate]);
+
+  useEffect(() => {
+    let index = 0;
+    setTitleText(""); // Reset titleText before starting
+    const interval = setInterval(() => {
+      if (index < fullTitle.length) {
+        setTitleText((prev) => prev + fullTitle.charAt(index));
+        index++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 100); // Adjust typing speed here (milliseconds)
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
+  }, [fullTitle]); // Dependency array includes fullTitle
 
   const checkSession = async () => {
     const accessToken = localStorage.getItem("accessToken");
@@ -67,14 +85,17 @@ const Account = (props) => {
 
   const authenticate = async (identifier, password) => {
     try {
-      const response = await fetch("http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ identifier, password }),
-        credentials: "include",
-      });
+      const response = await fetch(
+        "https://api.studymaster.io/api/auth/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ identifier, password }),
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Login failed");
@@ -100,10 +121,13 @@ const Account = (props) => {
 
   const refreshAccessToken = async () => {
     try {
-      const response = await fetch("http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/auth/refresh", {
-        method: "POST",
-        credentials: "include",
-      });
+      const response = await fetch(
+        "https://api.studymaster.io/api/auth/refresh",
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Refresh token failed");
@@ -123,7 +147,7 @@ const Account = (props) => {
   const resendVerificationCode = async (email) => {
     try {
       const response = await fetch(
-        `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/auth/resend?email=${email}`,
+        `https://api.studymaster.io/api/auth/resend?email=${email}`,
         {
           method: "POST",
         }
@@ -175,7 +199,9 @@ const Account = (props) => {
         {
           role: "system",
           content:
-            "You will be given the content that is covered for a certain specified class, along with the content that is covered for an exam in that class. Make a list of study sessions that start at " + examEvent.startDate.toString() + ", until the date of the exam, which will be given to you. Make sure that the study sessions cover all topics / material that will be tested on the exam. Give your response in this exact format (JSON format). For your first response, nothing other than these exact formats should be given in the response, it must be exactly as stated in the formats given." +
+            "You will be given the content that is covered for a certain specified class, along with the content that is covered for an exam in that class. Make a list of study sessions that start at " +
+            examEvent.startDate.toString() +
+            ", until the date of the exam, which will be given to you. Make sure that the study sessions cover all topics / material that will be tested on the exam. Give your response in this exact format (JSON format). For your first response, nothing other than these exact formats should be given in the response, it must be exactly as stated in the formats given." +
             `[{
             "week": "Week X",
             "sessions": [
@@ -254,7 +280,7 @@ const Account = (props) => {
       const userId = sessionData.userId;
       try {
         const response = await fetch(
-          `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/calendarevents`,
+          `https://api.studymaster.io/api/users/${userId}/calendarevents`,
           {
             method: "POST",
             headers: {
@@ -305,7 +331,7 @@ const Account = (props) => {
 
     try {
       const response = await fetch(
-        `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/calendarevents/${event.id}`,
+        `https://api.studymaster.io/api/users/${userId}/calendarevents/${event.id}`,
         {
           method: "PUT",
           headers: {
@@ -328,7 +354,11 @@ const Account = (props) => {
       const data = await response.json();
       if (response.ok) {
         console.log("Response from API:", data);
-        return [updatedContent, updatedContentGenerated, updatedPracticeProblems];
+        return [
+          updatedContent,
+          updatedContentGenerated,
+          updatedPracticeProblems,
+        ];
       } else {
         console.error("Failed to Edit Event:", data.error);
       }
@@ -343,7 +373,7 @@ const Account = (props) => {
 
     try {
       const response = await fetch(
-        `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/calendarevents/${event.id}`,
+        `https://api.studymaster.io/api/users/${userId}/calendarevents/${event.id}`,
         {
           method: "DELETE",
           headers: {
@@ -379,13 +409,14 @@ const Account = (props) => {
         isAuthenticated,
         addStudySessions,
         editUserEvent,
-        deleteCalendarEvent
+        deleteCalendarEvent,
       }}
     >
       {isAuthenticated ? (
         <>{props.children}</>
       ) : (
         <div id="auth-container">
+          <h1 id="auth-title">{titleText}</h1>
           <div id="auth-header">
             <button
               className={`auth-toggle-button ${isLogin ? "active" : ""}`}
@@ -397,7 +428,7 @@ const Account = (props) => {
               className={`auth-toggle-button ${!isLogin ? "active" : ""}`}
               onClick={() => setIsLogin(false)}
             >
-              Signup
+              Sign up
             </button>
           </div>
           <div id="auth-forms">{isLogin ? <Login /> : <Signup />}</div>

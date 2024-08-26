@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "./Header.js";
 import { AccountContext } from "../User/Account";
 import "./Home.css";
@@ -12,6 +13,7 @@ const Home = () => {
   const [classes, setClasses] = useState([]);
   const [startDate, setStartDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -42,7 +44,7 @@ const Home = () => {
     const userId = userSession.userId;
     try {
       const response = await fetch(
-        `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/calendarevents`,
+        `https://api.studymaster.io/api/users/${userId}/calendarevents`,
         {
           method: "GET",
           headers: {
@@ -154,6 +156,9 @@ const Home = () => {
           </div>
         )}
         <h2 style={{ marginTop: "50px" }}>Upcoming Exams</h2>
+        <h6 style={{ marginTop: "5px" }}>
+          Click on an upcoming exam below to make a personalized study guide
+        </h6>
         <div className="container-fluid practice-container">
           <div className="row">
             {getSortedExams().length > 0 ? (
@@ -181,7 +186,31 @@ const Home = () => {
                 </div>
               ))
             ) : (
-              <p>No upcoming exams.</p>
+              <>
+                <p>No upcoming exams.</p>
+                <div>
+                  Click{" "}
+                  <span>
+                    <button
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "blue",
+                        textDecoration: "underline",
+                        cursor: "pointer",
+                        padding: 0,
+                        font: "inherit",
+                      }}
+                      onClick={() => {
+                        navigate("../courses");
+                      }}
+                    >
+                      here
+                    </button>
+                  </span>{" "}
+                  to add a class and make a personalized study guide
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -197,7 +226,11 @@ const Home = () => {
               contentGenerated,
               practiceProblems
             ) => {
-              const [updatedContent, updatedContentGenerated, updatedPracticeProblems] = await editUserEvent(
+              const [
+                updatedContent,
+                updatedContentGenerated,
+                updatedPracticeProblems,
+              ] = await editUserEvent(
                 event,
                 newContent,
                 contentGenerated,

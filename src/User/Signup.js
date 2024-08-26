@@ -13,7 +13,7 @@ const Signup = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/auth/register", {
+      const response = await fetch("https://api.studymaster.io/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

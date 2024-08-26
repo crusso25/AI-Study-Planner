@@ -127,7 +127,7 @@ const EventModal = ({
     const userId = sessionData.userId;
     try {
       const response = await fetch(
-        `http://Springboot-backend-aws-env.eba-hezpp67z.us-east-1.elasticbeanstalk.com/api/users/${userId}/userclasses`,
+        `https://api.studymaster.io/api/users/${userId}/userclasses`,
         {
           method: "GET",
           headers: {
