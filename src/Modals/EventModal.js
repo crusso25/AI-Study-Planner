@@ -40,6 +40,7 @@ const EventModal = ({
   const [checkedTopics, setCheckedTopics] = useState([]);
   const [newTopic, setNewTopic] = useState({});
   const [otherTopics, setOtherTopics] = useState([]);
+  const [topicList, setTopicList] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -88,8 +89,8 @@ const EventModal = ({
 
   const handleConfirmLectureContent = async () => {
     const selectedTopics = checkedTopics.filter((topic) => topic.checked === true).map((topic) => topic.topic);
+    setTopicList(selectedTopics.toString());
     const selectedLectureEvents = calendarEvents.filter((evt) => selectedTopics.includes(evt.title));
-    console.log(selectedLectureEvents);
     setLectureEvents(selectedLectureEvents);
     setIsGenerating(true);
     setShowLecturePrompt(false);
@@ -142,10 +143,10 @@ const EventModal = ({
           (c) => c.className === event.className
         );
         if (userClass) {
-          await addStudySessions(userClass.classContent, event, lectureEvents);
-          updateEvent(event, null, true, null);
+          await addStudySessions(userClass.classContent, event, topicList);
+          await updateEvent(event, null, true, null);
           if (lectureEvents.length > 0) {
-            deleteLectureEvents();
+            await deleteLectureEvents();
           }
         } else {
           console.error("Class not found");
