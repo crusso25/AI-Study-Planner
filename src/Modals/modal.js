@@ -299,7 +299,7 @@ const Modal = ({ addClassToList, closeModal }) => {
               <label className="label">Name of Course</label>
             </div>
             <div className="input-group">
-              <h5>Course Start Date: </h5>
+              <h5>Course Start Date (First day of class):</h5>
               <input
                 className="input"
                 type="date"

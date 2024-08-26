@@ -1,13 +1,14 @@
-- Clean up style of modal
+- Lecture -> lecture topic
+	- make more specific the start date for course
 
-- set up SES from AWS (get name for website)
+- study guide maker: take all topics specified for exam, get list of topics (can separate one "topic" into more smaller topics if too big) and distribute evenly from now until exam date. 
+	- list topics on exam study guide on exam event modal.
 
-- set up environment for backend hosting / frontend.
-	- get a domain 
+- edit dates
 
-Extras:
+- settings modal /or new page
+
 - dark mode
 
 - api endpoints for practice events
 
-- settings modal /or new page
