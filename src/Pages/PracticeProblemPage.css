@@ -1,65 +1,64 @@
 .practice-problem-page {
-    padding: 20px;
-  }
-  
-  .problem-content {
-    margin-bottom: 20px;
-    font-size: 18px;
-  }
-  
-  .answer-section {
-    margin-bottom: 20px;
-  }
-  
-  textarea {
-    width: 100%;
-    height: 100px;
-    padding: 10px;
-    margin-bottom: 10px;
-    font-size: 16px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-  }
-  
-  .navigation-buttons {
-    display: flex;
-    justify-content: space-between;
-  }
-  
-  .feedback {
-    margin-top: 10px;
-    color: green;
-    font-weight: bold;
-  }
+  padding: 20px;
+}
 
-  .practice-formatter {
-    height: 90vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-  .correct-answer {
-    border: 2px solid green;
-  }
-  
-  .incorrect-answer {
-    border: 2px solid red;
-  }
-  
-  .correct-feedback {
-    color: green;
-    font-weight: bold;
-  }
-  
-  .incorrect-feedback {
-    color: red;
-  }
-  
-  .correct-answer-section {
-    margin-top: 10px;
-    padding: 10px;
-    border: 2px solid green;
-    border-radius: 5px;
-    background-color: #e6ffe6;
-  }
-  
+.problem-content {
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+
+.answer-section {
+  margin-bottom: 20px;
+}
+
+textarea {
+  width: 100%;
+  height: 100px;
+  padding: 10px;
+  margin-bottom: 10px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.navigation-buttons {
+  display: flex;
+  justify-content: space-between;
+}
+
+.feedback {
+  margin-top: 10px;
+  color: green;
+  font-weight: bold;
+}
+
+.practice-formatter {
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.correct-answer {
+  border: 2px solid green;
+}
+
+.incorrect-answer {
+  border: 2px solid red;
+}
+
+.correct-feedback {
+  color: green;
+  font-weight: bold;
+}
+
+.incorrect-feedback {
+  color: red;
+}
+
+.correct-answer-section {
+  margin-top: 10px;
+  padding: 10px;
+  border: 2px solid green;
+  border-radius: 5px;
+  background-color: #e6ffe6;
+}

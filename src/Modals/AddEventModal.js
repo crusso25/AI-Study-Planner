@@ -88,7 +88,7 @@ const AddEventModal = ({
           ) : (
             <button
               type="button"
-              className="button add-button"
+              className="button"
               onClick={handleAddEvent}
             >
               Done

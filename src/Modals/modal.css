@@ -44,8 +44,8 @@
 
 .modal-container {
   position: absolute;
-  width: 70rem;
-  height: 55rem;
+  width: 70vw;
+  height: 85vh;
   border-radius: 7px;
   z-index: 998;
   background-color: #fff;

@@ -9,6 +9,8 @@ import MyCalendar from "./Pages/MyCalendar";
 import Home from "./Pages/Home"
 import Practice from "./Pages/Practice";
 import PracticeProblemPage from "./Pages/PracticeProblemPage";
+import Exams from "./Pages/Exams";
+import StudyGuide from "./Pages/StudyGuide";
 
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
@@ -21,6 +23,8 @@ root.render(
           <Route path="calendar" element={<MyCalendar />} />
           <Route path="practice" element={<Practice />} />
           <Route path="practice/:id" element={<PracticeProblemPage />} />
+          <Route path="exams" element={<Exams />} />
+          <Route path="exams/:id" element={<StudyGuide />} />
         </Routes>
     </Account>
   </BrowserRouter>

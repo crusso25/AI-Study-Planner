@@ -409,6 +409,9 @@ const EventModal = ({
                 <p>
                   <strong>Type:</strong> {event.type}
                 </p>
+                <p>
+                  <strong>Date:</strong> {event.startDate.toString()}
+                </p>
                 {event.type === "Study Session" ? (
                   <div>
                     <button

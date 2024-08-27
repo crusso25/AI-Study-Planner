@@ -180,6 +180,7 @@ const Modal = ({ addClassToList, closeModal }) => {
               // 1. No session has the same title.
               // 2. The start time for each event is 10:00, and the end time is 12:00.
               // 3. The class start date is ${startDate.toString()}. The first event from the syllabus should be close to the start date for the course, if not then adjust all dates for these events to start at this classes start date.
+              // 4. For any events of type Lecture, the title of the event should be the main topic covered for that lecture.
             ]`,
       },
       {
@@ -346,7 +347,8 @@ const Modal = ({ addClassToList, closeModal }) => {
         >
           <h3>How will you enter course information?</h3>
           <br />
-          <div className="d-flex justify-content-center align-items-center">
+          <div className="d-flex flex-column justify-content-center align-items-center">
+          <div className="d-flex flex-column justify-content-center align-items-center">
             <button
               className="button"
               onClick={() => {
@@ -356,7 +358,12 @@ const Modal = ({ addClassToList, closeModal }) => {
             >
               Upload Syllabus
             </button>
+            {"(Use if you have a course syllabus schedule)"}
+            </div>
+            <br />
             <h5>or</h5>
+            <br />
+            <div className="d-flex flex-column justify-content-center align-items-center">
             <button
               className="button"
               onClick={() => {
@@ -366,6 +373,8 @@ const Modal = ({ addClassToList, closeModal }) => {
             >
                Enter Events Manually
             </button>
+            {"(Use if you don't have a specified course syllabus schedule)"}
+            </div>
           </div>
         </div>
       </div>

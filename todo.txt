@@ -1,8 +1,6 @@
 - Lecture -> lecture topic
 	- make more specific the start date for course
 
-- study guide maker: take all topics specified for exam, get list of topics (can separate one "topic" into more smaller topics if too big) and distribute evenly from now until exam date. 
-	- list topics on exam study guide on exam event modal.
 
 - edit dates
 
