@@ -14,6 +14,7 @@ const EventModal = ({
   backToClassModal,
   deleteEvent,
   calendarEvents,
+  fromModal
 }) => {
   const { getSession } = useContext(AccountContext);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -41,6 +42,8 @@ const EventModal = ({
   const [newTopic, setNewTopic] = useState({});
   const [otherTopics, setOtherTopics] = useState([]);
   const [topicList, setTopicList] = useState('');
+  const [title, setTitle] = useState(event.title);
+  const [startDate, setStartDate] = useState(event.startDate);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -57,6 +60,10 @@ const EventModal = ({
     };
     fetchSession();
   }, []);
+
+  useEffect(() => {
+    console.log(topicList)
+  }, [topicList])
 
   const handleGenerateClick = () => {
     const filteredLectureEvents = calendarEvents.filter(
@@ -81,19 +88,29 @@ const EventModal = ({
       checked: true,
     }));
     setCheckedTopics(mappedTopics);
-    const allLectureEvents = calendarEvents.filter((evt) => 
+    const allLectureEvents = calendarEvents.filter((evt) =>
       evt.type === "Lecture" && evt.className === event.className);
     const otherLectureEvents = allLectureEvents.filter((evt) => !lectureEvents.includes(evt));
     setOtherTopics(otherLectureEvents);
   };
 
+  const contentListToString = (selectedLectureEvents) => {
+    let str = '';
+    for (let i = 0; i < selectedLectureEvents.length; i ++) {
+      str += `(Section ${i + 1}: ${selectedLectureEvents[i].title}. Content covered in Section ${i + 1}: ${selectedLectureEvents[i].content}.) `
+    }
+    return str;
+  }
+
   const handleConfirmLectureContent = async () => {
     const selectedTopics = checkedTopics.filter((topic) => topic.checked === true).map((topic) => topic.topic);
-    setTopicList(selectedTopics.toString());
     const selectedLectureEvents = calendarEvents.filter((evt) => selectedTopics.includes(evt.title));
+    
+    setTopicList(contentListToString(selectedLectureEvents));
+    
     setLectureEvents(selectedLectureEvents);
-    setIsGenerating(true);
     setShowLecturePrompt(false);
+    await getClassContent();
   };
 
   const handleSpecifyContentManually = () => {
@@ -109,11 +126,61 @@ const EventModal = ({
 
   const handleDoneClick = async () => {
     setIsEditing(false);
-    await updateEvent(event, content, null, null);
+  
+    // Parse the existing startDate to get the time components
+    const originalStartDate = new Date(event.startDate);
+    const originalEndDate = new Date(event.endDate);
+  
+    // Parse the edited startDate (which only has the date part)
+    const newStartDate = new Date(startDate);
+  
+    // Create new Date objects with the same time as original but new date
+    const updatedStartDate = new Date(
+      newStartDate.getFullYear(),
+      newStartDate.getMonth(),
+      newStartDate.getDate() + 1,
+      originalStartDate.getHours(),
+      originalStartDate.getMinutes(),
+      originalStartDate.getSeconds()
+    );
+  
+    const updatedEndDate = new Date(
+      newStartDate.getFullYear(),
+      newStartDate.getMonth(),
+      newStartDate.getDate() + 1,
+      originalEndDate.getHours(),
+      originalEndDate.getMinutes(),
+      originalEndDate.getSeconds()
+    );
+  
+    // Ensure endDate is adjusted if needed (e.g., if it spans over multiple days)
+    if (originalEndDate.getTime() > originalStartDate.getTime()) {
+      const duration = originalEndDate.getTime() - originalStartDate.getTime();
+      updatedEndDate.setTime(updatedStartDate.getTime() + duration);
+    }
+  
+    const updatedEvent = {
+      ...event,
+      title,
+      startDate: updatedStartDate,
+      endDate: updatedEndDate,
+      content
+    };
+    setStartDate(updatedStartDate);
+    await updateEvent(updatedEvent);
   };
 
   const handleContentChange = (e) => {
     setContent(e.target.value);
+  };
+
+  const handleTitleChange = (e) => {
+    setTitle(e.target.value);
+  };
+
+  const handleDateChange = (e) => {
+    console.log(e.target.value);
+    setStartDate(e.target.value);
   };
 
   const deleteLectureEvents = async () => {
@@ -245,13 +312,23 @@ const EventModal = ({
       <div className="modal-container">
         <div className="modal-header">
           <div>
-            <h2>{event.title}</h2>
+            {isEditing ? (
+              <>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={handleTitleChange}
+                  className="title-input"
+                />
+              </>
+            ) : (
+              <h2>{title}</h2>
+            )}
             <p className="class-name">{event.className}</p>
           </div>
           <div
-            className={`close-icon toggleButton ${
-              backToClassModal ? "small-back-button" : ""
-            }`}
+            className={`close-icon toggleButton ${backToClassModal ? "small-back-button" : ""
+              }`}
             onClick={closeModal}
           >
             {backToClassModal ? "Back" : "×"}
@@ -368,9 +445,7 @@ const EventModal = ({
                     Done
                   </button>
                 </>
-              ) : (
-                <Latex>{content}</Latex>
-              )}
+              ) : null}
             </>
           ) : isGenerating && event.type === "Study Session" ? (
             <>
@@ -392,16 +467,8 @@ const EventModal = ({
               {isEditing ? (
                 <>
                   <textarea value={content} onChange={handleContentChange} />
-                  <button
-                    className="button done-button"
-                    onClick={handleDoneClick}
-                  >
-                    Done
-                  </button>
                 </>
-              ) : (
-                <Latex>{formatContent(content)}</Latex>
-              )}
+              ) : null}
             </>
           ) : (
             <>
@@ -409,15 +476,11 @@ const EventModal = ({
                 <p>
                   <strong>Type:</strong> {event.type}
                 </p>
-                <p>
-                  <strong>Date:</strong> {event.startDate.toString()}
-                </p>
                 {event.type === "Study Session" ? (
                   <div>
                     <button
-                      className={`button ${
-                        !event.contentGenerated && "generate-button"
-                      }`}
+                      className={`button ${!event.contentGenerated && "generate-button"
+                        }`}
                       onClick={() => {
                         navigate(`/practice/${event.id}`);
                       }}
@@ -425,15 +488,14 @@ const EventModal = ({
                       Take Practice Quiz
                     </button>
                   </div>
-                ) : event.type === "Exam" && !isEditing ? (
+                ) : event.type === "Exam" && !isEditing && !fromModal ? (
                   <div>
                     <button
                       onClick={handleGenerateClick}
-                      className={`button ${
-                        event.contentGenerated
-                          ? "button-disabled"
-                          : "generate-button"
-                      }`}
+                      className={`button ${event.contentGenerated
+                        ? "button-disabled"
+                        : "generate-button"
+                        }`}
                       disabled={event.contentGenerated}
                     >
                       Generate Study Plan
@@ -446,18 +508,32 @@ const EventModal = ({
                   </div>
                 ) : null}
               </div>
-              <Latex>{formatContent(event.content)}</Latex>
+              <br />
+              <p>
+                <strong>Date:</strong> {isEditing ? (
+                  <input
+                    type="date"
+                    value={new Date(startDate).toISOString().split("T")[0]}
+                    onChange={handleDateChange}
+                    className="date-input"
+                  />
+                ) : (
+                  new Date(startDate).toLocaleDateString("en-US", {
+                    weekday: "short",
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })
+                )}
+              </p>
+              <br />
               {isEditing ? (
                 <>
                   <textarea value={content} onChange={handleContentChange} />
-                  <button
-                    className="button done-button"
-                    onClick={handleDoneClick}
-                  >
-                    Done
-                  </button>
                 </>
-              ) : null}
+              ) : (
+                <Latex>{formatContent(content)}</Latex>
+              )}
             </>
           )}
         </div>
@@ -484,7 +560,14 @@ const EventModal = ({
                 Delete
               </button>
             </>
-          ) : null}
+          ) : (
+            <button
+              className="button done-button"
+              onClick={handleDoneClick}
+            >
+              Done
+            </button>
+          )}
         </div>
       </div>
       {practiceOpen && (

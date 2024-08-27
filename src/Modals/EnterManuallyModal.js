@@ -31,6 +31,14 @@ const EnterManuallyModal = ({
     setAddingEventType(null);
   };
 
+  const handleUpdateEvent = (updatedEvent) => {
+    const updatedEvents = updatedCalendarEvents.map((event) =>
+      event.title === updatedEvent.title ? updatedEvent : event
+    );
+    setUpdatedCalendarEvents(updatedEvents);
+  };
+  
+
   const handleAddNewEventType = () => {
     if (newEventType.trim() !== "") {
       assignmentTypes.push({ name: newEventType, checked: true });
@@ -103,10 +111,7 @@ const EnterManuallyModal = ({
         <>
           <div className="modal-header">
             <h2>Add Dates For {className}</h2>
-            <div
-              className="small-back-button"
-              onClick={closeModal}
-            >
+            <div className="small-back-button" onClick={closeModal}>
               Back
             </div>
           </div>
@@ -140,7 +145,9 @@ const EnterManuallyModal = ({
                         <li
                           key={index}
                           draggable
-                          onDragStart={(e) => handleDragStart(e, event.title)}
+                          onDragStart={(e) =>
+                            handleDragStart(e, event.title)
+                          }
                           onDragEnd={handleDragEnd}
                           onClick={() => setSelectedEvent(event)}
                           className="clickable"
@@ -197,21 +204,14 @@ const EnterManuallyModal = ({
           <EventModal
             event={selectedEvent}
             closeModal={() => setSelectedEvent(null)}
-            updateEvent={async (updatedEvent, newContent) => {
-              const updatedEvents = updatedCalendarEvents.map((event) =>
-                event === updatedEvent
-                  ? { ...event, content: newContent }
-                  : event
-              );
-              setSelectedEvent({ ...updatedEvent, content: newContent });
-              setUpdatedCalendarEvents(updatedEvents);
-            }}
+            updateEvent={handleUpdateEvent}
             addStudySessions={null}
             backToClassModal={() => setSelectedEvent(null)}
             deleteEvent={(event) => {
               deleteEvent(event);
               setSelectedEvent(null);
             }}
+            fromModal={true}
           />
         )}
         {addingEventType && (

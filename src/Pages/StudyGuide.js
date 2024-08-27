@@ -66,10 +66,12 @@ const StudyGuide = () => {
       const data = await response.json();
       if (response.ok) {
         console.log(data.content);
-        const filteredSessions = data.content.filter(
-          (event) =>
-            event.examFor === examEvent.title + ", " + examEvent.className
-        );
+        const filteredSessions = data.content
+          .filter(
+            (event) =>
+              event.examFor === examEvent.title + ", " + examEvent.className
+          )
+          .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
         setStudySessions(filteredSessions);
       } else {
         console.error("Failed to fetch study sessions:", data.error);

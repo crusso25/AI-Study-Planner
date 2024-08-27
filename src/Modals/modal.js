@@ -178,9 +178,9 @@ const Modal = ({ addClassToList, closeModal }) => {
               }
               // Repeat the above structure for each week, ensuring that:
               // 1. No session has the same title.
-              // 2. The start time for each event is 10:00, and the end time is 12:00.
+              // 2. The start time for each event is 10:00, and the end time is 12:00, unless explicity stated otherwise.
               // 3. The class start date is ${startDate.toString()}. The first event from the syllabus should be close to the start date for the course, if not then adjust all dates for these events to start at this classes start date.
-              // 4. For any events of type Lecture, the title of the event should be the main topic covered for that lecture.
+              // 4. For any events of type Lecture, the title of the event should be the main topic, or section / chapter name, that is covered for that lecture.
             ]`,
       },
       {
@@ -448,17 +448,12 @@ const Modal = ({ addClassToList, closeModal }) => {
               uploadEvents={async (updatedCalendarEvents) => {
                 submitEvents(updatedCalendarEvents);
               }}
+
             />
           )}
           {currentStep === 3 && (
             <EnterManuallyModal
-              closeModal={async () => {
-                const filteredEvents = calendarEvents.filter(
-                  (event) => event.type !== "Other"
-                );
-                await submitEvents(filteredEvents);
-                closeModal();
-              }}
+              closeModal={closeModal}
               addEvent={(event) => {
                 setCalendarEvents([...calendarEvents, event]);
               }}
@@ -473,8 +468,11 @@ const Modal = ({ addClassToList, closeModal }) => {
                 );
                 setCalendarEvents(updatedEvents);
               }}
-              uploadEvents={async (updatedCalendarEvents) => {
-                await submitEvents(updatedCalendarEvents);
+              uploadEvents={async () => {
+                const filteredEvents = calendarEvents.filter(
+                  (event) => event.type !== "Other"
+                );
+                await submitEvents(filteredEvents);
                 navigate("../");
               }}
             />

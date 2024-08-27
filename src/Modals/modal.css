@@ -147,8 +147,8 @@
   outline: none;
 }
 
-.input:focus ~ .label,
-.input:valid ~ .label {
+.input:focus~.label,
+.input:valid~.label {
   transform: translateX(-10px) translateY(-10%) scale(0.8);
   background-color: transparent;
   padding: 0.2em;
@@ -170,6 +170,16 @@
 
 .button:hover {
   background-color: #4c4cd1;
+}
+
+.delete-button {
+  background-color: #ff4d4d;
+  box-shadow: #ff4d4d 0 10px 20px -10px;
+  border: 1px solid #ff4d4d;
+}
+
+.delete-button:hover {
+  background-color: #cc0000;
 }
 
 .loading-overlay {
