@@ -13,6 +13,8 @@ const Account = (props) => {
   const [sessionData, setSessionData] = useState(null);
   const [isLogin, setIsLogin] = useState(true);
   const [titleText, setTitleText] = useState("");
+  const [numTotalEvents, setNumTotalEvents] = useState(null);
+  const [numGeneratedEvents, setNumGeneratedEvents] = useState(null);
   const navigate = useNavigate();
   const fullTitle = "Welcome to StudyMaster";
 
@@ -185,12 +187,12 @@ const Account = (props) => {
         });
       });
     });
+    setNumTotalEvents(events.length);
     return events;
   };
 
-  const addStudySessions = async (classContent, examEvent, topicList) => {
-    const today = new Date();
-    const dateString = today.toISOString().split('T')[0];
+  const addStudySessions = async (classContent, examEvent, topicList, dateString) => {
+    console.log(examEvent);
     const initialMessage = [
       {
         role: "system",
@@ -218,7 +220,8 @@ const Account = (props) => {
               ...
             ]
           }
-          **Repeat for each week, make sure that no title has the same name for any session. Make the start time 5pm to 6pm. Evenly distribute the topics between the start date and the date of the exam, and make sure that each study session is for one specific main topic (I.E there shouldnt be multiple big topics for one study session).**
+          //Repeat for each week, make sure that no title has the same name for any session. Make the start time 5pm to 6pm. Evenly distribute the topics between the start date and the date of the exam, and make sure that each study session is for one specific main topic (I.E there shouldnt be multiple big topics for one study session).
+          //Make AT MOST 15 sessions, each with unique topics covered. Only make more than 15 sessions if there are more than 15 unique topics given to you.
       ]`,
       },
       {
@@ -226,11 +229,11 @@ const Account = (props) => {
         content: `These are the topics that are covered on this exam: ${topicList}.`,
       },
     ];
-
     const initialResponse = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: initialMessage,
     });
+    // if (initialResponse.choices[0].message.content ===)
 
     const studySessions = await parseCalendarResponse(
       initialResponse.choices[0].message.content,
@@ -249,7 +252,7 @@ const Account = (props) => {
         content: `The course is ${examEvent.className}, and the content covered on the entire exam is ${examEvent.content}.`,
       },
     ];
-    console.log(studySessions);
+    let numStudy = 0;
     for (let session of studySessions) {
       const specificChatMessage = {
         role: "user",
@@ -266,7 +269,11 @@ const Account = (props) => {
       session.content += `\n\nDetailed Content:\n${specificContent}`;
       session.examFor = examEvent.title + ", " + examEvent.className;
       await addCalendarEvent(session);
+      setNumGeneratedEvents(numStudy);
+      numStudy++;
     }
+    setNumGeneratedEvents(null);
+    setNumTotalEvents(null);
     return studySessions;
   };
 
@@ -383,6 +390,7 @@ const Account = (props) => {
             content: updatedContent,
             contentGenerated: updatedContentGenerated,
             practiceProblems: updatedPracticeProblems,
+            examFor: event.examFor,
           }),
         }
       );
@@ -446,7 +454,9 @@ const Account = (props) => {
         editUserEvent,
         deleteCalendarEvent,
         addClass,
-        addCalendarEvent
+        addCalendarEvent,
+        numTotalEvents,
+        numGeneratedEvents
       }}
     >
       {isAuthenticated ? (

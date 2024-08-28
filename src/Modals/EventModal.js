@@ -16,7 +16,7 @@ const EventModal = ({
   calendarEvents,
   fromModal
 }) => {
-  const { getSession } = useContext(AccountContext);
+  const { getSession, numTotalEvents, numGeneratedEvents } = useContext(AccountContext);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState(event.content);
@@ -41,9 +41,11 @@ const EventModal = ({
   const [checkedTopics, setCheckedTopics] = useState([]);
   const [newTopic, setNewTopic] = useState({});
   const [otherTopics, setOtherTopics] = useState([]);
-  const [topicList, setTopicList] = useState('');
   const [title, setTitle] = useState(event.title);
   const [startDate, setStartDate] = useState(event.startDate);
+  const [filteredLectureEvents, setFilteredLectureEvents] = useState([]);
+  const [studyStartDate, setStudyStartDate] = useState(null);
+  const [allLectureEvents, setAllLectureEvents] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -52,7 +54,19 @@ const EventModal = ({
         const session = await getSession();
         setSessionData(session);
         getPracticeProblems();
-        console.log(event);
+        if (event.type === "Exam") {
+          setAllLectureEvents(calendarEvents.filter(
+            (evt) =>
+              evt.type === "Lecture" &&
+              evt.className === event.className));
+          setFilteredLectureEvents(calendarEvents.filter(
+            (evt) =>
+              evt.type === "Lecture" &&
+              evt.className === event.className &&
+              new Date(evt.startDate) <= new Date(event.startDate)
+          ));
+          setStudyStartDate(findStudyStartDate());
+        }
       } catch (error) {
         console.error("Error fetching session:", error);
         setSessionData(null);
@@ -61,41 +75,45 @@ const EventModal = ({
     fetchSession();
   }, []);
 
-  useEffect(() => {
-    console.log(topicList)
-  }, [topicList])
 
-  const handleGenerateClick = () => {
-    const filteredLectureEvents = calendarEvents.filter(
-      (evt) =>
-        evt.type === "Lecture" &&
-        evt.className === event.className &&
-        new Date(evt.startDate) <= new Date(event.startDate)
-    );
-    if (filteredLectureEvents.length > 0) {
+  const findStudyStartDate = () => {
+    const examsForClass = calendarEvents
+      .filter((evt) => evt.type === "Exam" && evt.className === event.className)
+      .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
+    const index = examsForClass.indexOf(event);
+    if (index > 0) {
+      return new Date(examsForClass[index - 1].startDate).toISOString().split("T")[0];
+    }
+    return new Date().toISOString().split("T")[0];
+  }
+
+  const handleGenerateClick = async () => {
+    if (allLectureEvents.length > 0) {
       setLectureEvents(filteredLectureEvents);
       setShowLecturePrompt(true);
+      handleUseLectureContent(filteredLectureEvents);
     } else {
       setIsGenerating(true);
     }
   };
 
-  const handleUseLectureContent = () => {
+  const handleUseLectureContent = (filteredLectureEvents) => {
     setUseLectureContent(true);
-    const mappedTopics = lectureEvents.map((event) => ({
+    const mappedTopics = filteredLectureEvents.map((event) => ({
       topic: event.title,
       checked: true,
     }));
     setCheckedTopics(mappedTopics);
     const allLectureEvents = calendarEvents.filter((evt) =>
       evt.type === "Lecture" && evt.className === event.className);
-    const otherLectureEvents = allLectureEvents.filter((evt) => !lectureEvents.includes(evt));
+    const otherLectureEvents = allLectureEvents.filter((evt) => !filteredLectureEvents.includes(evt));
     setOtherTopics(otherLectureEvents);
   };
 
   const contentListToString = (selectedLectureEvents) => {
     let str = '';
-    for (let i = 0; i < selectedLectureEvents.length; i ++) {
+    for (let i = 0; i < selectedLectureEvents.length; i++) {
       str += `(Section ${i + 1}: ${selectedLectureEvents[i].title}. Content covered in Section ${i + 1}: ${selectedLectureEvents[i].content}.) `
     }
     return str;
@@ -104,12 +122,13 @@ const EventModal = ({
   const handleConfirmLectureContent = async () => {
     const selectedTopics = checkedTopics.filter((topic) => topic.checked === true).map((topic) => topic.topic);
     const selectedLectureEvents = calendarEvents.filter((evt) => selectedTopics.includes(evt.title));
-    
-    setTopicList(contentListToString(selectedLectureEvents));
+
+    const topicList = contentListToString(selectedLectureEvents);
+    const dateString = studyStartDate;
     console.log(contentListToString(selectedLectureEvents));
     setLectureEvents(selectedLectureEvents);
     setShowLecturePrompt(false);
-    await getClassContent();
+    await getClassContent(topicList, dateString);
   };
 
   const handleSpecifyContentManually = () => {
@@ -117,6 +136,7 @@ const EventModal = ({
     setShowLecturePrompt(false);
     setLectureEvents([]);
     setIsGenerating(true);
+    setIsEditing(true);
   };
 
   const handleEditClick = () => {
@@ -125,14 +145,14 @@ const EventModal = ({
 
   const handleDoneClick = async () => {
     setIsEditing(false);
-  
+
     // Parse the existing startDate to get the time components
     const originalStartDate = new Date(event.startDate);
     const originalEndDate = new Date(event.endDate);
-  
+
     // Parse the edited startDate (which only has the date part)
     const newStartDate = new Date(startDate);
-  
+
     // Create new Date objects with the same time as original but new date
     const updatedStartDate = new Date(
       newStartDate.getFullYear(),
@@ -142,7 +162,7 @@ const EventModal = ({
       originalStartDate.getMinutes(),
       originalStartDate.getSeconds()
     );
-  
+
     const updatedEndDate = new Date(
       newStartDate.getFullYear(),
       newStartDate.getMonth(),
@@ -151,13 +171,13 @@ const EventModal = ({
       originalEndDate.getMinutes(),
       originalEndDate.getSeconds()
     );
-  
+
     // Ensure endDate is adjusted if needed (e.g., if it spans over multiple days)
     if (originalEndDate.getTime() > originalStartDate.getTime()) {
       const duration = originalEndDate.getTime() - originalStartDate.getTime();
       updatedEndDate.setTime(updatedStartDate.getTime() + duration);
     }
-  
+
     const updatedEvent = {
       ...event,
       title,
@@ -166,7 +186,7 @@ const EventModal = ({
       content
     };
     setStartDate(updatedStartDate);
-    await updateEvent(updatedEvent);
+    await updateEvent(updatedEvent, content);
   };
 
   const handleContentChange = (e) => {
@@ -177,8 +197,11 @@ const EventModal = ({
     setTitle(e.target.value);
   };
 
+  const handleStudyStartDateChange = (e) => {
+    setStudyStartDate(e.target.value);
+  }
+
   const handleDateChange = (e) => {
-    console.log(e.target.value);
     setStartDate(e.target.value);
   };
 
@@ -188,7 +211,7 @@ const EventModal = ({
     }
   };
 
-  const getClassContent = async () => {
+  const getClassContent = async (topicList, dateString) => {
     setIsLoading(true);
     const accessToken = sessionData.accessToken;
     const userId = sessionData.userId;
@@ -209,7 +232,9 @@ const EventModal = ({
           (c) => c.className === event.className
         );
         if (userClass) {
-          await addStudySessions(userClass.classContent, event, topicList);
+          console.log(topicList);
+          console.log(dateString);
+          await addStudySessions('', event, topicList, dateString);
           await updateEvent(event, null, true, null);
           if (lectureEvents.length > 0) {
             await deleteLectureEvents();
@@ -363,7 +388,7 @@ const EventModal = ({
                     }}
                   >
                     <option value="" hidden>
-                      Select a topic
+                      Other Course Topics
                     </option>
                     {otherTopics.map((obj, index) => (
                       <option key={index} value={obj.title}>
@@ -375,20 +400,27 @@ const EventModal = ({
                     Please confirm that the above lecture topics cover the exam
                     content.
                   </p>
-                  <div className="d-flex justify-content-start">
+                  <div className="d-flex justify-content-start" >
                     <button
-                      className="button"
+                      className="button" style={{ marginLeft: "0px" }}
                       onClick={handleConfirmLectureContent}
                     >
                       Confirm
                     </button>
                     <button
-                      className="button"
-                      onClick={() => setUseLectureContent(false)}
+                      className="button" style={{ marginLeft: "0px" }}
+                      onClick={handleSpecifyContentManually}
                     >
-                      Cancel
+                      Enter exam content manually
                     </button>
                   </div>
+                  <br />
+                  <span>Start studying: {" "}</span><input
+                    type="date"
+                    value={studyStartDate}
+                    onChange={handleStudyStartDateChange}
+                    className="date-input"
+                  />
                 </div>
               ) : (
                 <div>
@@ -432,19 +464,13 @@ const EventModal = ({
                 )}
               </div>
               <h3>
-                <strong>Current Exam Content:</strong>
+                <strong>Specify exam content:</strong>
               </h3>
               {isEditing ? (
                 <>
                   <textarea value={content} onChange={handleContentChange} />
-                  <button
-                    className="button done-button"
-                    onClick={handleDoneClick}
-                  >
-                    Done
-                  </button>
                 </>
-              ) : null}
+              ) : (content)}
             </>
           ) : isGenerating && event.type === "Study Session" ? (
             <>
@@ -527,9 +553,9 @@ const EventModal = ({
               </p>
               <br />
               {isEditing ? (
-                <>
-                  <textarea value={content} onChange={handleContentChange} />
-                </>
+                <textarea value={content} onChange={handleContentChange} />
+              ) : event.type === "Exam" ? (
+                <></>
               ) : (
                 <Latex>{formatContent(content)}</Latex>
               )}
@@ -537,8 +563,13 @@ const EventModal = ({
           )}
         </div>
         {isLoading && (
-          <div className="loading-overlay">
+          <div className="loading-overlay d-flex flex-column">
             <div className="spinner"></div>
+            {numGeneratedEvents === null ? (
+              <div>Making Study Guide Starting at: {studyStartDate}</div>
+            ) : (
+              <div>{numGeneratedEvents + 1}/{numTotalEvents} Topics Generated</div>
+            )}
           </div>
         )}
         <div className="modal-footer">
