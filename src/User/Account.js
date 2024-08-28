@@ -270,10 +270,49 @@ const Account = (props) => {
     return studySessions;
   };
 
+  const addClass = async (newClass, classContent) => {
+    if (sessionData) {
+      const accessToken = sessionData.accessToken;
+      const userId = sessionData.userId;
+      try {
+        const payload = {
+          className: newClass,
+          classContent: classContent,
+        };
+
+        const response = await fetch(
+          `https://api.studymaster.io/api/users/${userId}/userclasses`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          }
+        );
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to add class");
+        }
+        const data = await response.json();
+        console.log("Response from API:", data);
+      } catch (err) {
+        console.error("Error adding class:", err.message);
+      }
+    } else {
+      console.error("User is not authenticated");
+    }
+  };
+
   const addCalendarEvent = async (calendarEvent) => {
     if (sessionData) {
       const accessToken = sessionData.accessToken;
       const userId = sessionData.userId;
+      let contentGenerated = calendarEvent.contentGenerated;
+      if (calendarEvent.contentGenerated !== true && calendarEvent.contentGenerated !== false) {
+        contentGenerated = false;
+      }
       try {
         const response = await fetch(
           `https://api.studymaster.io/api/users/${userId}/calendarevents`,
@@ -290,7 +329,7 @@ const Account = (props) => {
               content: calendarEvent.content,
               className: calendarEvent.className,
               type: calendarEvent.type,
-              contentGenerated: false,
+              contentGenerated: contentGenerated,
               examFor: calendarEvent.examFor,
             }),
           }
@@ -406,6 +445,8 @@ const Account = (props) => {
         addStudySessions,
         editUserEvent,
         deleteCalendarEvent,
+        addClass,
+        addCalendarEvent
       }}
     >
       {isAuthenticated ? (

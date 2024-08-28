@@ -117,7 +117,7 @@ const EnterManuallyModal = ({
           </div>
           <div className="modal-content">
             <div>
-              Don't worry if any dates are missed, this can all be edited later.
+              You will be able to add and edit events. Please specify the topics covered for this course if the topics are not explicity stated.
             </div>
             <br />
             <div className="class-summary-container">

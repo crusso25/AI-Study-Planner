@@ -70,7 +70,6 @@ const EventModal = ({
       (evt) =>
         evt.type === "Lecture" &&
         evt.className === event.className &&
-        new Date(evt.startDate) >= new Date() &&
         new Date(evt.startDate) <= new Date(event.startDate)
     );
     if (filteredLectureEvents.length > 0) {
@@ -107,7 +106,7 @@ const EventModal = ({
     const selectedLectureEvents = calendarEvents.filter((evt) => selectedTopics.includes(evt.title));
     
     setTopicList(contentListToString(selectedLectureEvents));
-    
+    console.log(contentListToString(selectedLectureEvents));
     setLectureEvents(selectedLectureEvents);
     setShowLecturePrompt(false);
     await getClassContent();

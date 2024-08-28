@@ -188,8 +188,31 @@ const Home = () => {
             ) : (
               <>
                 <p>No upcoming exams.</p>
+                <strong>
                 <div>
                   Click{" "}
+                  <span>
+                    <button
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "blue",
+                        textDecoration: "underline",
+                        cursor: "pointer",
+                        padding: 0,
+                        font: "inherit",
+                      }}
+                      onClick={() => {
+                        navigate("../exams");
+                      }}
+                    >
+                      here
+                    </button>
+                  </span>{" "}
+                  to make a study guide for a specific exam.
+                </div>
+                <div>
+                  Or click{" "}
                   <span>
                     <button
                       style={{
@@ -208,8 +231,9 @@ const Home = () => {
                       here
                     </button>
                   </span>{" "}
-                  to add a class and make a personalized study guide
+                  to register a course schedule.
                 </div>
+                </strong>
               </>
             )}
           </div>

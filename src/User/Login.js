@@ -19,7 +19,7 @@ const Login = () => {
     return (
         <form onSubmit={handleLogin}>
             <div>
-                <label>Username:</label>
+                <label>Username or Email:</label>
                 <input
                     type="text"
                     value={identifier}

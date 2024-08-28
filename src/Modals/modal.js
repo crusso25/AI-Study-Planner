@@ -146,6 +146,7 @@ const Modal = ({ addClassToList, closeModal }) => {
     if (fileContents.length !== 0) {
       filesContent = fileContents.join("\n\n");
     }
+    console.log(startDate.toString());
     const newMessage = [
       {
         role: "system",

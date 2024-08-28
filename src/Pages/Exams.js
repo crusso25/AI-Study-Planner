@@ -3,11 +3,13 @@ import { useNavigate } from "react-router-dom";
 import Header from "./Header.js";
 import { AccountContext } from "../User/Account";
 import "./Exams.css";
+import AddExamModal from "../Modals/AddExamModal"; // Import the AddExamModal component
 
 const Exams = () => {
   const { getSession } = useContext(AccountContext);
   const [sessionData, setSessionData] = useState(null);
   const [examsWithStudyGuides, setExamsWithStudyGuides] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false); // State to manage modal visibility
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,7 +53,15 @@ const Exams = () => {
     <div className="main-container">
       <Header />
       <div className="container-fluid practice-container">
-        <h2>Study Guides</h2>
+        <div className="d-flex flex-row justify-content-between align-items-center">
+          <h1>Your Study Guides:</h1>
+          <button
+            onClick={() => setIsModalOpen(true)} // Open the modal when clicked
+            className="btn btn-primary"
+          >
+            Make Study Guide
+          </button>
+        </div>
         <div className="row">
           {examsWithStudyGuides.length > 0 ? (
             examsWithStudyGuides.map((exam) => (
@@ -77,8 +87,9 @@ const Exams = () => {
           ) : (
             <>
               <p>No exams with study guides available.</p>
+              <strong>
               <div>
-                Click{" "}
+                Click the 'Make Study Guide' button to make a study guide for a certain exam with specific topics, or click{" "}
                 <span>
                   <button
                     style={{
@@ -97,12 +108,20 @@ const Exams = () => {
                     here
                   </button>
                 </span>{" "}
-                to add a class and create study guides
+                to register a course and create study guides with course syllabus material.
               </div>
+              </strong>
             </>
           )}
         </div>
       </div>
+
+      {isModalOpen && (
+        <AddExamModal
+          closeModal={() => setIsModalOpen(false)}
+          updateStudyGuides={() => {fetchExams(sessionData)}}
+        />
+      )}
     </div>
   );
 };

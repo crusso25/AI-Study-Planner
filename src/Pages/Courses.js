@@ -230,14 +230,6 @@ const Classes = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="loading-overlay">
-        <div className="spinner"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="main-container">
       <Header />
@@ -271,6 +263,11 @@ const Classes = () => {
           ))}
         </div>
       </div>
+      {isLoading && (
+          <div className="loading-overlay">
+            <div className="spinner"></div>
+          </div>
+        )}
       {isAddClassModalOpen && (
         <Modal
           addClassToList={(className, classContent) => {
@@ -285,10 +282,12 @@ const Classes = () => {
         <ClassModal
           className={selectedClass}
           closeModal={() => setClassModalOpen(false)}
-          deleteClass={(className) => {
-            deleteClass(className);
+          deleteClass={async (className) => {
+            setIsLoading(true);
+            await deleteClass(className);
             setClassModalOpen(false);
-            fetchClasses(sessionData);
+            await fetchClasses(sessionData);
+            setIsLoading(false);
           }}
           calendarEvents={calendarEvents}
           fetchEvents={fetchEvents}

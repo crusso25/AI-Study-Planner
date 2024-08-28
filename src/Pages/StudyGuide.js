@@ -13,9 +13,11 @@ const StudyGuide = () => {
   const [studySessions, setStudySessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState(null);
   const [exam, setExam] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchSession = async () => {
+      setIsLoading(true);
       const session = await getSession();
       setSessionData(session);
       await fetchEvent(session);
@@ -69,7 +71,7 @@ const StudyGuide = () => {
         const filteredSessions = data.content
           .filter(
             (event) =>
-              event.examFor === examEvent.title + ", " + examEvent.className
+              event.examFor === examEvent.title + ", " + examEvent.className && event.type === "Study Session"
           )
           .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
         setStudySessions(filteredSessions);
@@ -79,6 +81,7 @@ const StudyGuide = () => {
     } catch (err) {
       console.error("Error fetching study sessions:", err);
     }
+    setIsLoading(false);
   };
 
   return (
@@ -108,6 +111,11 @@ const StudyGuide = () => {
           <p>No study sessions available for this exam.</p>
         )}
       </div>
+      {isLoading && (
+          <div className="loading-overlay">
+            <div className="spinner"></div>
+          </div>
+        )}
       {selectedSession && (
         <EventModal
           event={selectedSession}
