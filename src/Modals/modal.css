@@ -302,3 +302,7 @@ textarea {
   justify-content: center;
   align-items: center;
 }
+
+.input-error {
+  border: solid 1px red;
+}

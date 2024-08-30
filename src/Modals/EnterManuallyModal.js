@@ -31,11 +31,12 @@ const EnterManuallyModal = ({
     setAddingEventType(null);
   };
 
-  const handleUpdateEvent = (updatedEvent) => {
+  const handleUpdateEvent = (updatedEvent, newContent) => {
     const updatedEvents = updatedCalendarEvents.map((event) =>
-      event.title === updatedEvent.title ? updatedEvent : event
+      (event.title === updatedEvent.title) ? { ...updatedEvent, content: newContent } : event
     );
     setUpdatedCalendarEvents(updatedEvents);
+    setSelectedEvent(updatedEvent);
   };
   
 
@@ -208,7 +209,14 @@ const EnterManuallyModal = ({
             addStudySessions={null}
             backToClassModal={() => setSelectedEvent(null)}
             deleteEvent={(event) => {
+              console.log(event);
               deleteEvent(event);
+              const updatedEvents = calendarEvents.filter(
+                (calendarEvent) =>
+                  calendarEvent.title !== event.title ||
+                  calendarEvent.className !== event.className
+                );
+              setUpdatedCalendarEvents(updatedEvents);
               setSelectedEvent(null);
             }}
             fromModal={true}

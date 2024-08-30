@@ -78,8 +78,8 @@ const MyCalendar = () => {
             item.type === "Study Session"
               ? item.content.split("\n")[0]
               : item.title,
-          startDate: new Date(item.startDate),
-          endDate: new Date(item.endDate),
+          startDate: item.startDate,
+          endDate: item.endDate,
           content: item.content,
           className: item.className,
           type: item.type,
@@ -151,25 +151,6 @@ const MyCalendar = () => {
         selectedTypes.has(event.type) && selectedClasses.has(event.className)
     );
     setFilteredEvents(filtered);
-  };
-
-  const parseCalendarResponse = async (response, className) => {
-    const cleanedResponse = response.replace(/```json|```/g, "");
-    const parsedResponse = JSON.parse(cleanedResponse);
-    const events = [];
-    parsedResponse.forEach((week) => {
-      week.sessions.forEach((session) => {
-        events.push({
-          title: session.title,
-          startDate: new Date(`${session.date}T${session.startTime}:00`),
-          endDate: new Date(`${session.date}T${session.endTime}:00`),
-          content: session.content,
-          className: className,
-          type: "Study Session",
-        });
-      });
-    });
-    return events;
   };
 
   const addStudySessionsToCalendar = async (

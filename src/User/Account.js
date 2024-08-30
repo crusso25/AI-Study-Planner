@@ -192,14 +192,13 @@ const Account = (props) => {
   };
 
   const addStudySessions = async (classContent, examEvent, topicList, dateString) => {
-    console.log(examEvent);
     const initialMessage = [
       {
         role: "system",
         content:
           "You will be given the content that is covered for an exam in the course " + examEvent.className + ". Make a list of study sessions that start at " +
           dateString +
-          ", until the date of the exam, which is " + examEvent.startDate.toISOString().split('T')[0] + ". Make sure that the study sessions cover all topics that will be tested on the exam. Give your response in this exact format (JSON format). Nothing other than these exact formats should be given in the response, it must be exactly as stated in the format given." +
+          ", until the date of the exam, which is " + examEvent.startDate + ". Make sure that the study sessions cover all topics that will be tested on the exam. Give your response in this exact format (JSON format). Nothing other than these exact formats should be given in the response, it must be exactly as stated in the format given." +
           `[{
             "week": "Week X",
             "sessions": [
@@ -233,7 +232,6 @@ const Account = (props) => {
       model: "gpt-4o",
       messages: initialMessage,
     });
-    // if (initialResponse.choices[0].message.content ===)
 
     const studySessions = await parseCalendarResponse(
       initialResponse.choices[0].message.content,

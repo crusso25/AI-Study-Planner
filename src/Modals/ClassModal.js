@@ -15,8 +15,9 @@ const ClassModal = ({
 }) => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [addingEventType, setAddingEventType] = useState(null);
-  const { getSession } = useContext(AccountContext);
+  const { getSession, deleteCalendarEvent } = useContext(AccountContext);
   const [sessionData, setSessionData] = useState(null);
+  const [updatedCalendarEvents, setUpdatedCalendarEvents] = useState(calendarEvents);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -32,7 +33,7 @@ const ClassModal = ({
   }, []);
 
   useEffect(() => {
-    console.log(className);
+    console.log(updatedCalendarEvents);
   }, []);
 
   const formatDate = (date) => {
@@ -43,22 +44,22 @@ const ClassModal = ({
   const getEventsByType = (className) => {
     const eventTypes = [
       ...new Set(
-        calendarEvents
+        updatedCalendarEvents
           .filter((event) => event.className === className)  // Filter by className first
           .map((event) => event.type)
       )
     ];
-  
+
     const eventsByType = {};
     eventTypes.forEach((type) => {
-      eventsByType[type] = calendarEvents
+      eventsByType[type] = updatedCalendarEvents
         .filter((event) => event.type === type && event.className === className)
-        .sort((a, b) => new Date(a.start) - new Date(b.start));
+        .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
     });
-  
+
     return eventsByType;
   };
-  
+
 
   const eventsByType = getEventsByType(className);
 
@@ -78,8 +79,8 @@ const ClassModal = ({
           },
           body: JSON.stringify({
             className: event.className,
-            endDate: event.end,
-            startDate: event.start,
+            endDate: event.endDate,
+            startDate: event.startDate,
             id: event.id,
             title: event.title,
             type: event.type,
@@ -165,7 +166,7 @@ const ClassModal = ({
                           onClick={() => setSelectedEvent(event)}
                           className="clickable"
                         >
-                          {event.title} ({formatDate(new Date(event.start))})
+                          {event.title} ({formatDate(new Date(event.startDate))})
                         </li>
                       ))}
                     </ul>
@@ -192,14 +193,21 @@ const ClassModal = ({
           event={selectedEvent}
           closeModal={() => setSelectedEvent(null)}
           updateEvent={async (updatedEvent, newContent) => {
-            const updatedEvents = calendarEvents.map((event) =>
-              event === updatedEvent ? { ...event, content: newContent } : event
+            const updatedEvents = updatedCalendarEvents.map((event) =>
+              event.id === updatedEvent.id ? { ...updatedEvent, content: newContent } : event
             );
-            setSelectedEvent({ ...updatedEvent, content: newContent });
+            setSelectedEvent(updatedEvent);
+            setUpdatedCalendarEvents(updatedEvents);
             await editUserEvent(updatedEvent, newContent);
+          }}
+          deleteEvent={(deletedEvent) => {
+            setUpdatedCalendarEvents(updatedCalendarEvents.filter((event) => event.id !== deletedEvent.id));
+            setSelectedEvent(null);
+            deleteCalendarEvent(deletedEvent);
           }}
           addStudySessions={null}
           backToClassModal={() => setSelectedEvent(null)}
+          fromClassModal={true}
         />
       )}
       {addingEventType && (

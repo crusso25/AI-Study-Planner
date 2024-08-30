@@ -88,7 +88,7 @@ const Home = () => {
         event.className === className &&
         event.startDate >= startDate &&
         event.startDate <=
-          new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000)
+        new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000)
     );
   };
 
@@ -178,10 +178,11 @@ const Home = () => {
                     </p>
                     <button
                       className="btn btn-primary"
-                      onClick={() => setSelectedEvent(event)}
+                      onClick={() => event.contentGenerated ? navigate(`/exams/${event.id}`) : setSelectedEvent(event)}
                     >
-                      View
+                      {event.contentGenerated ? "View Study Guide" : "View"}
                     </button>
+
                   </div>
                 </div>
               ))
@@ -189,50 +190,50 @@ const Home = () => {
               <>
                 <p>No upcoming exams.</p>
                 <strong>
-                <div>
-                  Click{" "}
-                  <span>
-                    <button
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "blue",
-                        textDecoration: "underline",
-                        cursor: "pointer",
-                        padding: 0,
-                        font: "inherit",
-                      }}
-                      onClick={() => {
-                        navigate("../exams");
-                      }}
-                    >
-                      here
-                    </button>
-                  </span>{" "}
-                  to make a study guide for a specific exam.
-                </div>
-                <div>
-                  Or click{" "}
-                  <span>
-                    <button
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "blue",
-                        textDecoration: "underline",
-                        cursor: "pointer",
-                        padding: 0,
-                        font: "inherit",
-                      }}
-                      onClick={() => {
-                        navigate("../courses");
-                      }}
-                    >
-                      here
-                    </button>
-                  </span>{" "}
-                  to register a course schedule.
-                </div>
+                  <div>
+                    Click{" "}
+                    <span>
+                      <button
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "blue",
+                          textDecoration: "underline",
+                          cursor: "pointer",
+                          padding: 0,
+                          font: "inherit",
+                        }}
+                        onClick={() => {
+                          navigate("../exams");
+                        }}
+                      >
+                        here
+                      </button>
+                    </span>{" "}
+                    to make a study guide for a specific exam.
+                  </div>
+                  <div>
+                    Or click{" "}
+                    <span>
+                      <button
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "blue",
+                          textDecoration: "underline",
+                          cursor: "pointer",
+                          padding: 0,
+                          font: "inherit",
+                        }}
+                        onClick={() => {
+                          navigate("../courses");
+                        }}
+                      >
+                        here
+                      </button>
+                    </span>{" "}
+                    to register a course schedule.
+                  </div>
                 </strong>
               </>
             )}
@@ -263,11 +264,11 @@ const Home = () => {
               const updatedEvents = calendarEvents.map((e) =>
                 e === event
                   ? {
-                      ...e,
-                      content: updatedContent,
-                      contentGenerated: updatedContentGenerated,
-                      practiceProblems: updatedPracticeProblems,
-                    }
+                    ...e,
+                    content: updatedContent,
+                    contentGenerated: updatedContentGenerated,
+                    practiceProblems: updatedPracticeProblems,
+                  }
                   : e
               );
               setCalendarEvents(updatedEvents);

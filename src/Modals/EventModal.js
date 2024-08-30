@@ -10,13 +10,12 @@ const EventModal = ({
   event,
   closeModal,
   updateEvent,
-  addStudySessions,
   backToClassModal,
   deleteEvent,
   calendarEvents,
-  fromModal
+  fromModal,
 }) => {
-  const { getSession, numTotalEvents, numGeneratedEvents } = useContext(AccountContext);
+  const { getSession, numTotalEvents, numGeneratedEvents, addStudySessions } = useContext(AccountContext);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState(event.content);
@@ -52,6 +51,7 @@ const EventModal = ({
     const fetchSession = async () => {
       try {
         const session = await getSession();
+        console.log(event);
         setSessionData(session);
         getPracticeProblems();
         if (event.type === "Exam") {
@@ -111,7 +111,7 @@ const EventModal = ({
     setOtherTopics(otherLectureEvents);
   };
 
-  const contentListToString = (selectedLectureEvents) => {
+  const contentListToString = async (selectedLectureEvents) => {
     let str = '';
     for (let i = 0; i < selectedLectureEvents.length; i++) {
       str += `(Section ${i + 1}: ${selectedLectureEvents[i].title}. Content covered in Section ${i + 1}: ${selectedLectureEvents[i].content}.) `
@@ -121,14 +121,12 @@ const EventModal = ({
 
   const handleConfirmLectureContent = async () => {
     const selectedTopics = checkedTopics.filter((topic) => topic.checked === true).map((topic) => topic.topic);
-    const selectedLectureEvents = calendarEvents.filter((evt) => selectedTopics.includes(evt.title));
+    const selectedLectureEvents = await calendarEvents.filter((evt) => selectedTopics.includes(evt.title));
 
-    const topicList = contentListToString(selectedLectureEvents);
-    const dateString = studyStartDate;
-    console.log(contentListToString(selectedLectureEvents));
+    const topicList = await contentListToString(selectedLectureEvents);
     setLectureEvents(selectedLectureEvents);
     setShowLecturePrompt(false);
-    await getClassContent(topicList, dateString);
+    await getClassContent(topicList, studyStartDate);
   };
 
   const handleSpecifyContentManually = () => {
@@ -145,48 +143,60 @@ const EventModal = ({
 
   const handleDoneClick = async () => {
     setIsEditing(false);
-
-    // Parse the existing startDate to get the time components
-    const originalStartDate = new Date(event.startDate);
-    const originalEndDate = new Date(event.endDate);
-
-    // Parse the edited startDate (which only has the date part)
-    const newStartDate = new Date(startDate);
-
-    // Create new Date objects with the same time as original but new date
-    const updatedStartDate = new Date(
-      newStartDate.getFullYear(),
-      newStartDate.getMonth(),
-      newStartDate.getDate() + 1,
-      originalStartDate.getHours(),
-      originalStartDate.getMinutes(),
-      originalStartDate.getSeconds()
-    );
-
-    const updatedEndDate = new Date(
-      newStartDate.getFullYear(),
-      newStartDate.getMonth(),
-      newStartDate.getDate() + 1,
-      originalEndDate.getHours(),
-      originalEndDate.getMinutes(),
-      originalEndDate.getSeconds()
-    );
-
-    // Ensure endDate is adjusted if needed (e.g., if it spans over multiple days)
-    if (originalEndDate.getTime() > originalStartDate.getTime()) {
-      const duration = originalEndDate.getTime() - originalStartDate.getTime();
-      updatedEndDate.setTime(updatedStartDate.getTime() + duration);
+    if (startDate === event.startDate) {
+      console.log(startDate);
+      console.log(event.startDate);
+      const updatedEvent = {
+        ...event,
+        title,
+        startDate: event.startDate,
+        endDate: event.endDate,
+        content: content
+      };
+      await updateEvent(updatedEvent, content, event.contentGenerated);
     }
+    else {
+      // Parse the existing startDate to get the time components
+      const originalStartDate = new Date(event.startDate);
+      const originalEndDate = new Date(event.endDate);
 
-    const updatedEvent = {
-      ...event,
-      title,
-      startDate: updatedStartDate,
-      endDate: updatedEndDate,
-      content
-    };
-    setStartDate(updatedStartDate);
-    await updateEvent(updatedEvent, content);
+      // Parse the edited startDate (which only has the date part)
+      const newStartDate = new Date(startDate);
+
+      // Create new Date objects with the same time as original but new date
+      const updatedStartDate = new Date(
+        newStartDate.getFullYear(),
+        newStartDate.getMonth(),
+        newStartDate.getDate() + 1,
+        originalStartDate.getHours(),
+        originalStartDate.getMinutes(),
+        originalStartDate.getSeconds()
+      );
+
+      const updatedEndDate = new Date(
+        newStartDate.getFullYear(),
+        newStartDate.getMonth(),
+        newStartDate.getDate() + 1,
+        originalEndDate.getHours(),
+        originalEndDate.getMinutes(),
+        originalEndDate.getSeconds()
+      );
+
+      // Ensure endDate is adjusted if needed (e.g., if it spans over multiple days)
+      if (originalEndDate.getTime() > originalStartDate.getTime()) {
+        const duration = originalEndDate.getTime() - originalStartDate.getTime();
+        updatedEndDate.setTime(updatedStartDate.getTime() + duration);
+      }
+      const updatedEvent = {
+        ...event,
+        title,
+        startDate: updatedStartDate,
+        endDate: updatedEndDate,
+        content: content
+      };
+      setStartDate(updatedStartDate);
+      await updateEvent(updatedEvent, content, event.contentGenerated);
+    }
   };
 
   const handleContentChange = (e) => {
@@ -211,6 +221,7 @@ const EventModal = ({
     }
   };
 
+
   const getClassContent = async (topicList, dateString) => {
     setIsLoading(true);
     const accessToken = sessionData.accessToken;
@@ -232,8 +243,6 @@ const EventModal = ({
           (c) => c.className === event.className
         );
         if (userClass) {
-          console.log(topicList);
-          console.log(dateString);
           await addStudySessions('', event, topicList, dateString);
           await updateEvent(event, null, true, null);
           if (lectureEvents.length > 0) {
@@ -516,20 +525,11 @@ const EventModal = ({
                 ) : event.type === "Exam" && !isEditing && !fromModal ? (
                   <div>
                     <button
-                      onClick={handleGenerateClick}
-                      className={`button ${event.contentGenerated
-                        ? "button-disabled"
-                        : "generate-button"
-                        }`}
-                      disabled={event.contentGenerated}
+                      onClick={event.contentGenerated ? () => navigate(`/exams/${event.id}`) : handleGenerateClick}
+                      className={event.contentGenerated ? "button" : "button generate-button"}
                     >
-                      Generate Study Plan
+                      {event.contentGenerated ? "View Study Plan" : "Generate Study Plan"}
                     </button>
-                    {event.contentGenerated && (
-                      <div className="d-flex justify-content-center small-text">
-                        Study sessions generated
-                      </div>
-                    )}
                   </div>
                 ) : null}
               </div>
@@ -573,30 +573,34 @@ const EventModal = ({
           </div>
         )}
         <div className="modal-footer">
-          {!isEditing ? (
+          {!showLecturePrompt && (
             <>
-              {event.type !== "Study Session" && (
+              {!isEditing ? (
+                <>
+                  {event.type !== "Study Session" && (
+                    <button
+                      className="button edit-button"
+                      onClick={handleEditClick}
+                    >
+                      Edit
+                    </button>
+                  )}
+                  <button
+                    className="button delete-button"
+                    onClick={handleDeleteClick}
+                  >
+                    Delete
+                  </button>
+                </>
+              ) : (
                 <button
-                  className="button edit-button"
-                  onClick={handleEditClick}
+                  className="button done-button"
+                  onClick={handleDoneClick}
                 >
-                  Edit
+                  Done
                 </button>
               )}
-              <button
-                className="button delete-button"
-                onClick={handleDeleteClick}
-              >
-                Delete
-              </button>
             </>
-          ) : (
-            <button
-              className="button done-button"
-              onClick={handleDoneClick}
-            >
-              Done
-            </button>
           )}
         </div>
       </div>

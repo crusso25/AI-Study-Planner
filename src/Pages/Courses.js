@@ -68,13 +68,14 @@ const Classes = () => {
         console.log("Response from API:", data);
         const userEvents = data.content.map((item) => ({
           title: item.title,
-          start: new Date(item.startDate),
-          end: new Date(item.endDate),
+          startDate: item.startDate,
+          endDate: item.endDate,
           content: item.content,
           className: item.className,
           type: item.type,
           id: item.id,
-          contentGenerated: item.contentGenerated
+          contentGenerated: item.contentGenerated,
+          examFor: item.examFor
         }));
         setCalendarEvents(userEvents);
       } else {

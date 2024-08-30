@@ -43,7 +43,7 @@ const Practice = () => {
               (item.type === "Lecture" || item.type === "Study Session") &&
               new Date(item.startDate) >= startDate &&
               new Date(item.startDate) <=
-                new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000)
+              new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000)
           )
           .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
         setPracticeEvents(practiceEvents);
@@ -121,28 +121,52 @@ const Practice = () => {
           ) : (
             <>
               <p>No practice quizzes available.</p>
-              <div>
-                Click{" "}
+              <strong>
+                <div>
+                  Click{" "}
+                  <span>
+                    <button
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "blue",
+                        textDecoration: "underline",
+                        cursor: "pointer",
+                        padding: 0,
+                        font: "inherit",
+                      }}
+                      onClick={() => {
+                        navigate("../exams");
+                      }}
+                    >
+                      here
+                    </button>
+                  </span>{" "}
+                  to add an exam, {" "}
+                </div>
                 <span>
-                  <button
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "blue",
-                      textDecoration: "underline",
-                      cursor: "pointer",
-                      padding: 0,
-                      font: "inherit",
-                    }}
-                    onClick={() => {
-                      navigate("../classes");
-                    }}
-                  >
-                    here
-                  </button>
-                </span>{" "}
-                to add a class and get practicing
-              </div>
+                  or click{" "}
+                  <span>
+                    <button
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "blue",
+                        textDecoration: "underline",
+                        cursor: "pointer",
+                        padding: 0,
+                        font: "inherit",
+                      }}
+                      onClick={() => {
+                        navigate("../courses");
+                      }}
+                    >
+                      here
+                    </button>
+                  </span>{" "}
+                  to register a course.
+                </span>
+              </strong>
             </>
           )}
         </div>

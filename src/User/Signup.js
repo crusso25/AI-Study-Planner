@@ -94,6 +94,7 @@ const Signup = () => {
               <button type="submit">Signup</button>
               {error && <p>{error}</p>}
             </form>
+            <div>*Email verification in maintenance, ignore verification email*</div>
           </>
           {isLoading && (
             <div className="loading-overlay">

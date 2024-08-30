@@ -35,6 +35,7 @@ const Modal = ({ addClassToList, closeModal }) => {
   const [formattedFileContent, setFormattedFileContent] = useState("");
   const [checkWarning, setCheckWarning] = useState(false);
   const [syllabusContents, setSyllabusContents] = useState("");
+  const [classNameError, setClassNameError] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -53,6 +54,26 @@ const Modal = ({ addClassToList, closeModal }) => {
   useEffect(() => {
     console.log(syllabusContents);
   }, []);
+
+  const handleClassNameChange = (e) => {
+    setClassName(e.target.value); // Allow any value to be entered
+    setClassNameError(false); // Reset error when the user starts typing
+  };
+
+  const handleNextStep = (manualEntry) => {
+    const trimmedClassName = className.trim(); // Trim spaces at the beginning and end
+
+    if (trimmedClassName === "") {
+      setClassNameError(true);
+    } else {
+      setClassName(trimmedClassName);
+      if (manualEntry) {
+        setCurrentStep(3);
+      } else {
+        setCurrentStep(2);
+      }
+    }
+  };
 
   const assignmentTypesToString = () => {
     return assignmentTypes
@@ -292,13 +313,17 @@ const Modal = ({ addClassToList, closeModal }) => {
           >
             <div className="input-group">
               <input
-                className="input"
+                className={`input ${classNameError ? 'input-error' : ''}`}
                 type="text"
                 value={className}
-                onChange={(e) => setClassName(e.target.value)}
+                onChange={handleClassNameChange}
                 required
               />
-              <label className="label">Name of Course</label>
+              {!classNameError ? (
+                <label className="label">Name of Course</label>
+              ) : (
+                <label style={{ color: "red" }} className="label">Please enter name of course</label>
+              )}
             </div>
             <div className="input-group">
               <h5>Course Start Date (First day of class):</h5>
@@ -316,16 +341,18 @@ const Modal = ({ addClassToList, closeModal }) => {
             {checkWarning && (
               <p>You must have Exam and Lecture Topics event types</p>
             )}
-            {assignmentTypes.map((type, index) => (
-              <div key={index} className="checkbox-group">
-                <input
-                  type="checkbox"
-                  checked={type.checked}
-                  onChange={() => handleCheckboxChange(index)}
-                />
-                <label>{type.name}</label>
-              </div>
-            ))}
+            <div className="">
+              {assignmentTypes.map((type, index) => (
+                <div key={index} className="checkbox-group">
+                  <input
+                    type="checkbox"
+                    checked={type.checked}
+                    onChange={() => handleCheckboxChange(index)}
+                  />
+                  <label>{type.name}</label>
+                </div>
+              ))}
+            </div>
             <div className="input-group new-assignment-type">
               <input
                 type="text"
@@ -349,32 +376,26 @@ const Modal = ({ addClassToList, closeModal }) => {
           <h3>How will you enter course information?</h3>
           <br />
           <div className="d-flex flex-column justify-content-center align-items-center">
-          <div className="d-flex flex-column justify-content-center align-items-center">
-            <button
-              className="button"
-              onClick={() => {
-                setCurrentStep(2);
-                setIsManualEntry(false);
-              }}
-            >
-              Upload Syllabus
-            </button>
-            {"(Use if you have a course syllabus schedule)"}
+            <div className="d-flex flex-column justify-content-center align-items-center">
+              <button
+                className="button"
+                onClick={() => handleNextStep(false)}
+              >
+                Upload Syllabus
+              </button>
+              {"(Use if you have a course syllabus schedule)"}
             </div>
             <br />
             <h5>or</h5>
             <br />
             <div className="d-flex flex-column justify-content-center align-items-center">
-            <button
-              className="button"
-              onClick={() => {
-                setIsManualEntry(true);
-                setCurrentStep(2);
-              }}
-            >
-               Enter Events Manually
-            </button>
-            {"(Use if you don't have a specified course syllabus schedule)"}
+              <button
+                className="button"
+                onClick={() => handleNextStep(true)}
+              >
+                Enter Events Manually
+              </button>
+              {"(Use if you don't have a specified course syllabus schedule)"}
             </div>
           </div>
         </div>
@@ -449,7 +470,6 @@ const Modal = ({ addClassToList, closeModal }) => {
               uploadEvents={async (updatedCalendarEvents) => {
                 submitEvents(updatedCalendarEvents);
               }}
-
             />
           )}
           {currentStep === 3 && (
