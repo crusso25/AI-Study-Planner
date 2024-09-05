@@ -168,7 +168,7 @@ const Account = (props) => {
     localStorage.removeItem("userId");
     setAuthentication(false);
     setSessionData(null);
-    navigate("/login"); // Redirect to login page
+    navigate("/login");
   };
 
   const parseCalendarResponse = async (response, className) => {
