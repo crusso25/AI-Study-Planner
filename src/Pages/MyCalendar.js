@@ -153,31 +153,31 @@ const MyCalendar = () => {
     setFilteredEvents(filtered);
   };
 
-  const addStudySessionsToCalendar = async (
-    classContent,
-    examEvent,
-    lectureEvents
-  ) => {
-    const studySessions = await addStudySessions(
-      classContent,
-      examEvent,
-      lectureEvents
-    );
+  // const addStudySessionsToCalendar = async (
+  //   classContent,
+  //   examEvent,
+  //   lectureEvents
+  // ) => {
+  //   const studySessions = await addStudySessions(
+  //     classContent,
+  //     examEvent,
+  //     lectureEvents
+  //   );
 
-    const updatedCalendarEvents = [...calendarEvents, ...studySessions];
-    setCalendarEvents(updatedCalendarEvents);
-    setFilteredEvents(
-      updatedCalendarEvents.filter((event) => selectedTypes.has(event.type))
-    );
+  //   const updatedCalendarEvents = [...calendarEvents, ...studySessions];
+  //   setCalendarEvents(updatedCalendarEvents);
+  //   setFilteredEvents(
+  //     updatedCalendarEvents.filter((event) => selectedTypes.has(event.type))
+  //   );
 
-    const session = await getSession();
-    await fetchEvents(session);
+  //   const session = await getSession();
+  //   await fetchEvents(session);
 
-    if (!eventTypes.includes("Study Session")) {
-      setEventTypes([...eventTypes, "Study Session"]);
-      setSelectedTypes(new Set([...selectedTypes, "Study Session"]));
-    }
-  };
+  //   if (!eventTypes.includes("Study Session")) {
+  //     setEventTypes([...eventTypes, "Study Session"]);
+  //     setSelectedTypes(new Set([...selectedTypes, "Study Session"]));
+  //   }
+  // };
 
   return (
     <div className="main-container">
@@ -278,15 +278,6 @@ const MyCalendar = () => {
               contentGenerated: updatedContentGenerated,
               practiceProblems: updatedPracticeProblems,
             });
-          }}
-          addStudySessions={async (classContent, event, lectureEvents) => {
-            await addStudySessionsToCalendar(
-              classContent,
-              event,
-              lectureEvents
-            );
-            fetchEvents(sessionData);
-            setSelectedEvent(null);
           }}
           deleteEvent={async (event) => {
             if (event.type === "Exam" && event.contentGenerated) {

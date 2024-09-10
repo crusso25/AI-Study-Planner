@@ -194,6 +194,7 @@ const EnterManuallyModal = ({
             <button
               className="button"
               onClick={() => {
+                console.log(updatedCalendarEvents);
                 uploadEvents(updatedCalendarEvents);
               }}
             >

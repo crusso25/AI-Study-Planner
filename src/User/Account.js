@@ -4,7 +4,7 @@ import Signup from "./Signup";
 import Login from "./Login";
 import "./Account.css";
 import { jwtDecode } from "jwt-decode";
-import openai from "../openai";
+import { getInitialResponse, getSpecificResponse } from "../IgnoredFiles/UserInfoGetter"
 
 const AccountContext = createContext();
 
@@ -191,81 +191,17 @@ const Account = (props) => {
     return events;
   };
 
-  const addStudySessions = async (classContent, examEvent, topicList, dateString) => {
-    const initialMessage = [
-      {
-        role: "system",
-        content:
-          "You will be given the content that is covered for an exam in the course " + examEvent.className + ". Make a list of study sessions that start at " +
-          dateString +
-          ", until the date of the exam, which is " + examEvent.startDate + ". Make sure that the study sessions cover all topics that will be tested on the exam. Give your response in this exact format (JSON format). Nothing other than these exact formats should be given in the response, it must be exactly as stated in the format given." +
-          `[{
-            "week": "Week X",
-            "sessions": [
-              {
-                "title": "{topic}",
-                "date": "YYYY-MM-DD",
-                "startTime": "HH:MM",
-                "endTime": "HH:MM",
-                "content": "{topic}"
-              },
-              {
-                "title": "{topic}",
-                "date": "YYYY-MM-DD",
-                "startTime": "HH:MM",
-                "endTime": "HH:MM",
-                "content": "{topic}"
-              }
-              ...
-            ]
-          }
-          //Repeat for each week, make sure that no title has the same name for any session. Make the start time 5pm to 6pm. Evenly distribute the topics between the start date and the date of the exam, and make sure that each study session is for one specific main topic (I.E there shouldnt be multiple big topics for one study session).
-          //Make AT MOST 15 sessions, each with unique topics covered. Only make more than 15 sessions if there are more than 15 unique topics given to you.
-      ]`,
-      },
-      {
-        role: "user",
-        content: `These are the topics that are covered on this exam: ${topicList}.`,
-      },
-    ];
-    const initialResponse = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: initialMessage,
-    });
-
-    const studySessions = await parseCalendarResponse(
-      initialResponse.choices[0].message.content,
-      examEvent.className
-    );
-
-    const updatedPrompt = [
-      {
-        role: "system",
-        content: `You will be given a course, along with a specific topic covered in that course. Make a study guide containing detailed information and key concepts needed to master this content. 
-        Your study guide should only cover the content relevant to the topic that you are prompted. Do not include practice problems or questions in the additionalContent.
-        Do not include anything else in your response other than the study guide. (I.E. Don't include an intro or outro to your response saying "Here is a detailed study guide ..." or anything along those lines. Keep the study guide clean.)`,
-      },
-      {
-        role: "user",
-        content: `The course is ${examEvent.className}, and the content covered on the entire exam is ${examEvent.content}.`,
-      },
-    ];
+  const addStudySessions = async (examEvent, topicList, dateString) => {
+    const initialResponse = await getInitialResponse(examEvent, topicList, dateString);
+    const studySessions = await parseCalendarResponse(initialResponse, examEvent.className);
     let numStudy = 0;
     for (let session of studySessions) {
-      const specificChatMessage = {
-        role: "user",
-        content: `This is the topic to make study guide on: ${session.content}.`,
-      };
-      const specificMessageInput = [...updatedPrompt, specificChatMessage];
-
-      const specificResponse = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: specificMessageInput,
-      });
-      const specificContent = specificResponse.choices[0].message.content;
-      session.type = "Study Session";
-      session.content += `\n\nDetailed Content:\n${specificContent}`;
-      session.examFor = examEvent.title + ", " + examEvent.className;
+      const specificResponse = await getSpecificResponse(examEvent, topicList, session);
+      // Update study session contents
+      session.type = 'Study Session';
+      session.content += `\n\nDetailed Content:\n${specificResponse}`;
+      session.examFor = examEvent.title + ', ' + examEvent.className;
+      // Add events to user database and change spinner loading message
       await addCalendarEvent(session);
       setNumGeneratedEvents(numStudy);
       numStudy++;

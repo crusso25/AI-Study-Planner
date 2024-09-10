@@ -4,7 +4,7 @@ import { AccountContext } from "../User/Account";
 import Latex from "react-latex-next";
 import "./EventModal.css";
 import PracticeModal from "./PracticeModal";
-import openai from "../openai";
+import { getPracticeResponse } from "../IgnoredFiles/UserInfoGetter"
 
 const EventModal = ({
   event,
@@ -23,16 +23,6 @@ const EventModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const [practiceOpen, setPracticeOpen] = useState(false);
   const [chatResponse, updateChatResponse] = useState("");
-  const [chatMessages, updateMessages] = useState([
-    {
-      role: "system",
-      content: `You will be given a course, along with a specific topic from that course. 
-        Make a list of five total practice problems / questions from the given topic that could be asked on an exam for the given course. 
-        Do not include anything else in your response other than the study guide. Use LaTeX syntax if there is any mathematical notation needed.
-        (I.E. Don't include an intro or outro to your response saying "Here are practice questions ..." or anything along those lines. Keep the problem list clean.)
-        Make the practice problem list labels each practice problem with a number before it. For example: 1. {practice problem 1}. \n 2. {practice problem 2} ...`,
-    },
-  ]);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showLecturePrompt, setShowLecturePrompt] = useState(false);
   const [lectureEvents, setLectureEvents] = useState([]);
@@ -243,7 +233,7 @@ const EventModal = ({
           (c) => c.className === event.className
         );
         if (userClass) {
-          await addStudySessions('', event, topicList, dateString);
+          await addStudySessions(event, topicList, dateString);
           await updateEvent(event, null, true, null);
           if (lectureEvents.length > 0) {
             await deleteLectureEvents();
@@ -262,24 +252,8 @@ const EventModal = ({
 
   const makePractice = async () => {
     setIsLoading(true);
-    const newMessage = {
-      role: "user",
-      content:
-        "The course is " +
-        event.className +
-        ", and the content that these problems should be based off of is " +
-        event.content.split("\n")[0] +
-        ".",
-    };
-    const updatedChatMessages = [...chatMessages, newMessage];
-    updateMessages(updatedChatMessages);
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: updatedChatMessages,
-    });
-    const parsedResponse = response.choices[0].message.content;
-    updateChatResponse(parsedResponse);
-    await updateEvent(event, null, true, response.choices[0].message.content);
+    const practiceProblems = getPracticeResponse(event);
+    await updateEvent(event, null, true, practiceProblems);
     setIsGenerating(false);
     setIsLoading(false);
     setPracticeOpen(true);
@@ -308,8 +282,11 @@ const EventModal = ({
   };
 
   const formatContent = (content) => {
+    const index = content.indexOf('Detailed Content:\n');
+    if (index !== -1) {
+      content = content.substring(index + 18).trim();
+    }
     const parts = content.split(/(\\\[.*?\\\]|\\\(.*?\\\))/gs);
-
     const formattedParts = parts.map((part) => {
       if (part.startsWith("\\[") || part.startsWith("\\(")) {
         return part.replace("\\[\n", "<br/>\\[");

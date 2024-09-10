@@ -14,6 +14,9 @@
 # environment
 .env
 
+# ignored files
+/src/IgnoredFiles
+
 # misc
 .DS_Store
 .env.local

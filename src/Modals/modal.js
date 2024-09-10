@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import DragDrop from "./DragDrop";
-import openai from "../openai";
 import * as pdfjsLib from "pdfjs-dist/webpack";
 import Tesseract from "tesseract.js";
 import { AccountContext } from "../User/Account";
 import EnterManuallyModal from "./EnterManuallyModal";
 import "./modal.css";
+import { getCalendarResponse } from "../IgnoredFiles/UserInfoGetter"
 
 const Modal = ({ addClassToList, closeModal }) => {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
@@ -167,57 +167,10 @@ const Modal = ({ addClassToList, closeModal }) => {
     if (fileContents.length !== 0) {
       filesContent = fileContents.join("\n\n");
     }
-    console.log(startDate.toString());
-    const newMessage = [
-      {
-        role: "system",
-        content:
-          "Given the information on this class, extract events for the course syllabus. Categorize all events into one of the specified event types for the class (" +
-          assignmentTypesToString() +
-          ", or 'Other'). All events from the syllabus must be in this schedule, if an event does not fit any of the specified event types for the class, then its type should be 'Other'. The output must be provided strictly in the JSON format specified below. Do not include any additional information, explanations, or text outside of the JSON structure. The JSON must adhere exactly to the structure provided, without any deviations:" +
-          `[
-              {
-                "week": "Week X",
-                "sessions": [
-                  {
-                    "title": "{title of event}",
-                    "date": "YYYY-MM-DD",
-                    "startTime": "XX:XX",
-                    "endTime": "XX:XX",
-                    "content": "{Content / topic covered for this event}",
-                    "type": "{One of the types provided, or 'Other' if it does not fit any of the provided categories}"
-                  },
-                  {
-                    "title": "{title of event}",
-                    "date": "YYYY-MM-DD",
-                    "startTime": "XX:XX",
-                    "endTime": "XX:XX",
-                    "content": "{Content / topic covered for this event}",
-                    "type": "{One of the types provided, or 'Other' if it does not fit any of the provided categories}"
-                  }
-                  // Add more sessions as necessary, each following the same structure.
-                ]
-              }
-              // Repeat the above structure for each week, ensuring that:
-              // 1. No session has the same title.
-              // 2. The start time for each event is 10:00, and the end time is 12:00, unless explicity stated otherwise.
-              // 3. The class start date is ${startDate.toString()}. The first event from the syllabus should be close to the start date for the course, if not then adjust all dates for these events to start at this classes start date.
-              // 4. For any events of type Lecture, the title of the event should be the main topic, or section / chapter name, that is covered for that lecture.
-            ]`,
-      },
-      {
-        role: "user",
-        content: filesContent,
-      },
-    ];
-    updateChat(newMessage);
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: newMessage,
-    });
-    updateResponse(response);
-    console.log(response.choices[0].message.content);
-    await parseResponse(response.choices[0].message.content);
+    const assignmentTypes = assignmentTypesToString();
+    const calendarResponse = await getCalendarResponse(assignmentTypes, startDate, filesContent);
+    await parseResponse(calendarResponse);
+    
     setCurrentStep(3);
     setIsLoading(false);
   };
@@ -489,8 +442,8 @@ const Modal = ({ addClassToList, closeModal }) => {
                 );
                 setCalendarEvents(updatedEvents);
               }}
-              uploadEvents={async () => {
-                const filteredEvents = calendarEvents.filter(
+              uploadEvents={async (updatedCalendarEvents) => {
+                const filteredEvents = updatedCalendarEvents.filter(
                   (event) => event.type !== "Other"
                 );
                 await submitEvents(filteredEvents);
