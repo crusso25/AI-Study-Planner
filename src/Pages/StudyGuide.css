@@ -1,0 +1,40 @@
+.study-guide-container {
+  padding: 20px;
+}
+
+.study-session-list {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: space-evenly;
+}
+
+.study-session-item > h3 {
+  color: #007bff;
+  font-weight: bold;
+}
+
+.study-session-item {
+  width: 400px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  border: 1px solid #007bff;
+  background-color: #fff;
+  cursor: pointer;
+  transition: box-shadow 0.3s ease;
+}
+
+.study-session-item:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.study-guide-container > h2 {
+  margin-bottom: 50px;
+  margin-left: 20px;
+}
+
+p {
+  margin: 0;
+}

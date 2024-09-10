@@ -1,27 +1,12 @@
-Things to do with study planner app:
-
---Find layout for class homepage
-
---Finalize header layout
-	-User settings pop up
-	-Header as a sidebar in big screen?
-
---Be able to click on classes to edit information / add more information to update calendar
-
---Make practice problems / questions that pertains to the material for a certain study session
-	-Add to clickable calendar events
-
---Make a better login / signup page
-
-FINISHED :
---Fix add class button
-
---Make the calendar events clickable to a pop up of that study session's material (Practice problems, content to review, recourses, ...)
+- Lecture -> lecture topic
+	- make more specific the start date for course
 
 
+- edit dates
 
-************
-New calendar creation method:
---Ask user for the start date of the class.
---Create calendar based on actual due dates first (IE: Exams, Quizes, Assignments, Projects, etc...). Mark as different colors in the calendar
---Make the clickable events in the calendar have a button like "generate study plan" that will generate a study plan from today until 
+- settings modal /or new page
+
+- dark mode
+
+- api endpoints for practice events
+

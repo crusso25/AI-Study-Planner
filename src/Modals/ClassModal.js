@@ -3,13 +3,21 @@ import "./modal.css";
 import "./ClassModal.css";
 import EventModal from "./EventModal";
 import AddEventModal from "./AddEventModal";
-import { AccountContext } from "../Account";
+import { AccountContext } from "../User/Account";
 
-const ClassModal = ({ className, closeModal, deleteClass, calendarEvents, fetchEvents }) => {
+const ClassModal = ({
+  className,
+  closeModal,
+  deleteClass,
+  calendarEvents,
+  fetchEvents,
+  assignmentTypes,
+}) => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [addingEventType, setAddingEventType] = useState(null);
-  const { getSession } = useContext(AccountContext);
+  const { getSession, deleteCalendarEvent } = useContext(AccountContext);
   const [sessionData, setSessionData] = useState(null);
+  const [updatedCalendarEvents, setUpdatedCalendarEvents] = useState(calendarEvents);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -24,40 +32,60 @@ const ClassModal = ({ className, closeModal, deleteClass, calendarEvents, fetchE
     fetchSession();
   }, []);
 
+  useEffect(() => {
+    console.log(updatedCalendarEvents);
+  }, []);
+
   const formatDate = (date) => {
     const options = { weekday: "short", month: "numeric", day: "numeric" };
     return date.toLocaleDateString(undefined, options);
   };
 
   const getEventsByType = (className) => {
-    const eventTypes = [...new Set(calendarEvents.map((event) => event.type))];
+    const eventTypes = [
+      ...new Set(
+        updatedCalendarEvents
+          .filter((event) => event.className === className)  // Filter by className first
+          .map((event) => event.type)
+      )
+    ];
+
     const eventsByType = {};
     eventTypes.forEach((type) => {
-      eventsByType[type] = calendarEvents
-        .filter((event) => event.className === className && event.type === type)
-        .sort((a, b) => new Date(a.start) - new Date(b.start));
+      eventsByType[type] = updatedCalendarEvents
+        .filter((event) => event.type === type && event.className === className)
+        .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
     });
+
     return eventsByType;
   };
+
 
   const eventsByType = getEventsByType(className);
 
   const editUserEvent = async (event, newContent) => {
-    const idToken = sessionData.getIdToken().getJwtToken();
-    const userId = sessionData.getIdToken().payload.sub;
+    console.log(event);
+    if (!sessionData) return;
+    const accessToken = sessionData.accessToken;
+    const userId = sessionData.userId;
     try {
       const response = await fetch(
-        "https://yloqq6vtu4.execute-api.us-east-2.amazonaws.com/test/editUserEvent",
+        `https://api.studymaster.io/api/users/${userId}/calendarevents/${event.id}`,
         {
-          method: "POST",
+          method: "PUT",
           headers: {
-            Authorization: idToken,
+            Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            userId: userId,
+            className: event.className,
+            endDate: event.endDate,
+            startDate: event.startDate,
+            id: event.id,
             title: event.title,
+            type: event.type,
             content: newContent,
+            contentGenerated: event.contentGenerated
           }),
         }
       );
@@ -65,27 +93,27 @@ const ClassModal = ({ className, closeModal, deleteClass, calendarEvents, fetchE
       if (response.ok) {
         console.log("Response from API:", data);
       } else {
-        console.error("Failed to Edit Event:", data.error);
+        console.error("Failed to edit event:", data.error);
       }
     } catch (err) {
-      console.error("Error Editing Event:", err);
+      console.error("Error editing event:", err);
     }
   };
 
-  const addCalendarEvent = async (calendarEvent, session) => {
-    const idToken = session.getIdToken().getJwtToken();
-    const userId = session.getIdToken().payload.sub;
+  const addCalendarEvent = async (calendarEvent) => {
+    if (!sessionData) return;
+    const accessToken = sessionData.accessToken;
+    const userId = sessionData.userId;
     try {
       const response = await fetch(
-        "https://yloqq6vtu4.execute-api.us-east-2.amazonaws.com/test/addCalendarEvents/",
+        `https://api.studymaster.io/api/users/${userId}/calendarevents`,
         {
           method: "POST",
           headers: {
-            Authorization: idToken,
+            Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            userId: userId,
             title: calendarEvent.title,
             startDate: calendarEvent.startDate,
             endDate: calendarEvent.endDate,
@@ -99,10 +127,10 @@ const ClassModal = ({ className, closeModal, deleteClass, calendarEvents, fetchE
       if (response.ok) {
         console.log("Response from API:", data);
       } else {
-        console.error("Failed to add class:", data.error);
+        console.error("Failed to add event:", data.error);
       }
     } catch (err) {
-      console.error("Error adding class:", err);
+      console.error("Error adding event:", err);
     }
   };
 
@@ -120,8 +148,8 @@ const ClassModal = ({ className, closeModal, deleteClass, calendarEvents, fetchE
           <div className="modal-content">
             <div className="class-summary-container">
               {Object.keys(eventsByType).map((type) => (
-                <div className="event-type-container">
-                  <div className="event-list" key={type}>
+                <div className="event-type-container" key={type}>
+                  <div className="event-list">
                     <div className="event-list-header">
                       <h4>{type}s</h4>
                       <button
@@ -138,7 +166,7 @@ const ClassModal = ({ className, closeModal, deleteClass, calendarEvents, fetchE
                           onClick={() => setSelectedEvent(event)}
                           className="clickable"
                         >
-                          {event.title} ({formatDate(new Date(event.start))})
+                          {event.title} ({formatDate(new Date(event.startDate))})
                         </li>
                       ))}
                     </ul>
@@ -150,8 +178,10 @@ const ClassModal = ({ className, closeModal, deleteClass, calendarEvents, fetchE
           <div className="modal-footer">
             <button
               type="button"
-              className="button delete-class"
-              onClick={deleteClass}
+              className="button delete-button"
+              onClick={() => {
+                deleteClass(className)
+              }}
             >
               Delete Class
             </button>
@@ -162,15 +192,22 @@ const ClassModal = ({ className, closeModal, deleteClass, calendarEvents, fetchE
         <EventModal
           event={selectedEvent}
           closeModal={() => setSelectedEvent(null)}
-          updateEventContent={async (updatedEvent, newContent) => {
-            const updatedEvents = calendarEvents.map((event) =>
-              event === updatedEvent ? { ...event, content: newContent } : event
+          updateEvent={async (updatedEvent, newContent) => {
+            const updatedEvents = updatedCalendarEvents.map((event) =>
+              event.id === updatedEvent.id ? { ...updatedEvent, content: newContent } : event
             );
-            setSelectedEvent({ ...updatedEvent, content: newContent });
+            setSelectedEvent(updatedEvent);
+            setUpdatedCalendarEvents(updatedEvents);
             await editUserEvent(updatedEvent, newContent);
+          }}
+          deleteEvent={(deletedEvent) => {
+            setUpdatedCalendarEvents(updatedCalendarEvents.filter((event) => event.id !== deletedEvent.id));
+            setSelectedEvent(null);
+            deleteCalendarEvent(deletedEvent);
           }}
           addStudySessions={null}
           backToClassModal={() => setSelectedEvent(null)}
+          fromClassModal={true}
         />
       )}
       {addingEventType && (

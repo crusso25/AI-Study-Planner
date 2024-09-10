@@ -1,6 +1,4 @@
-.button:hover {
-  background-color: #4c4cd1;
-}
+
 
 .generate-button {
   background-color: #28a745;
@@ -69,4 +67,54 @@
   display: inline-block;
   text-align: center;
   margin-left: 10px;
+}
+
+.button-disabled {
+  background-color: #d3d3d3;
+  color: #a0a0a0;
+  border: 1px solid #a0a0a0;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.button-disabled:hover {
+  background-color: #d3d3d3;
+  color: #a0a0a0;
+}
+
+.delete-confirmation {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  border: 1px solid #ccc;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.delete-confirmation p {
+  margin-bottom: 20px;
+}
+
+.button.confirm-button {
+  background-color: #ff5e5e;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.button.cancel-button {
+  background-color: #5e5df0;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.katex-html {
+  display: none !important;
 }

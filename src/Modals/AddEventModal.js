@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import "./AddEventModal.css";
-import { AccountContext } from "../Account";
+import { AccountContext } from "../User/Account";
 
 const AddEventModal = ({
   className,
@@ -88,7 +88,7 @@ const AddEventModal = ({
           ) : (
             <button
               type="button"
-              className="button add-button"
+              className="button"
               onClick={handleAddEvent}
             >
               Done

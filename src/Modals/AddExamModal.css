@@ -1,0 +1,9 @@
+.topics-section {
+    margin-left: 20px;
+    flex-grow: 1;
+  }
+  
+  .add-topic-button {
+    display: block;
+    margin-top: 10px;
+  }
